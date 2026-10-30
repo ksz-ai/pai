@@ -1,13 +1,18 @@
 /**
  * Pyodide 沙箱 Worker（SPEC M2-1）。
- * 在浏览器 WASM 中运行用户 Python 代码：stdout 捕获、matplotlib 图表收集、包白名单惰性加载。
+ * 在浏览器 WASM 内运行用户 Python 代码：stdout 捕获、matplotlib 图表收集、包白名单惰性加载、中文字体装载。
  * 运行超时由主线程负责（terminate 本 worker），下次运行会自动重建。
  */
 
 const PYODIDE_CDN = "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js";
+/** 内置中文字体（Noto Sans SC，OFL 许可）。matplotlib 默认字体无 CJK 字形，不装则中文显示为方框 */
+const CJK_FONT_URL = "/fonts/NotoSansSC-VF.ttf";
+/** 代码中出现 CJK（汉字/全角/注音等）→ 需要装载中文字体 */
+const CJK_RE = /[\u3000-\u30ff\u3400-\u9fff\uf900-\ufaff\uff00-\uffef]/;
 
 let pyodide = null;
 let initPromise = null;
+let cjkFontPromise = null;
 
 async function init() {
   if (initPromise) return initPromise;
@@ -20,6 +25,33 @@ async function init() {
   return initPromise;
 }
 
+/** 装载中文字体并设为 matplotlib 首选（幂等；失败静默降级，下次运行会重试） */
+function installCjkFont() {
+  if (cjkFontPromise) return cjkFontPromise;
+  cjkFontPromise = (async () => {
+    self.postMessage({ type: "status", msg: "加载中文字体（首次约 17MB，已缓存则秒开）…" });
+    const res = await fetch(CJK_FONT_URL);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.arrayBuffer();
+    if (data.byteLength < 1024 * 1024) throw new Error("字体文件异常");
+    pyodide.FS.writeFile("/tmp/cjk-font.ttf", new Uint8Array(data));
+    await pyodide.runPythonAsync(`
+import matplotlib
+from matplotlib import font_manager
+font_manager.fontManager.addfont("/tmp/cjk-font.ttf")
+_name = font_manager.FontProperties(fname="/tmp/cjk-font.ttf").get_name()
+matplotlib.rcParams["font.sans-serif"] = [_name, "DejaVu Sans"]
+matplotlib.rcParams["axes.unicode_minus"] = False
+`);
+    return true;
+  })().catch(() => {
+    cjkFontPromise = null;
+    return false;
+  });
+  return cjkFontPromise;
+}
+
+
 /** 包白名单：按代码内容惰性加载 */
 async function ensurePackages(code) {
   const pkgs = [];
@@ -31,6 +63,13 @@ async function ensurePackages(code) {
     // matplotlib 装完立即锁 AGG（无头后端，plt.show() 只产生无害 warning）
     if (pkgs.includes("matplotlib")) {
       await pyodide.runPython("import matplotlib; matplotlib.use('AGG')");
+      // 图表文字含 CJK → 装载中文字体（失败仅提示，不阻断运行）
+      if (CJK_RE.test(code)) {
+        const ok = await installCjkFont();
+        if (!ok) {
+          self.postMessage({ type: "status", msg: "中文字体加载失败，图表中的中文可能显示为方框" });
+        }
+      }
     }
   }
   if (/import\s+sympy|from\s+sympy/.test(code)) {

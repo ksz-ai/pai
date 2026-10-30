@@ -23,7 +23,7 @@ type PendingEntry = {
 };
 
 /** Worker 脚本版本：public 文件无 hash，bump 此参数强制浏览器取新版本 */
-const WORKER_URL = "/pyodide-worker.js?v=20261030-exec-split";
+const WORKER_URL = "/pyodide-worker.js?v=20261030-cjkfont";
 
 class PyodideRunner {
   private worker: Worker | null = null;
