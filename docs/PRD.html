@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Personal AI 学习应用 · PRD V1.0</title>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#171a21; --panel2:#1c2029; --border:#2a3040;
+    --text:#e2e6ef; --text2:#aab2c2; --text3:#7c8598;
+    --accent:#7c9aff; --accent2:#5fd39a; --warn:#e8b04b; --danger:#e87a7a;
+    --purple:#b48ce8; --teal:#5bc8c8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--bg); color:var(--text);
+    font-family:-apple-system,"PingFang SC","Microsoft YaHei","Segoe UI",Roboto,sans-serif;
+    line-height:1.75; font-size:15.5px;}
+  .wrap{max-width:960px; margin:0 auto; padding:48px 28px 80px;}
+  header.doc{border-bottom:1px solid var(--border); padding-bottom:24px; margin-bottom:28px;}
+  .doc-tag{display:inline-block; font-size:12px; color:var(--accent2); border:1px solid var(--accent2);
+    border-radius:4px; padding:2px 10px; letter-spacing:2px; margin-bottom:12px;}
+  h1{font-size:28px; font-weight:700; letter-spacing:.5px;}
+  .sub{color:var(--text2); margin-top:8px; font-size:14px;}
+  h2{font-size:20px; margin:54px 0 16px; padding:8px 0 8px 14px; border-left:4px solid var(--accent);
+    background:linear-gradient(90deg,rgba(124,154,255,.10),transparent); letter-spacing:.5px;}
+  h3{font-size:16.5px; margin:30px 0 10px; color:#fff;}
+  h4{font-size:14.5px; margin:20px 0 8px; color:var(--accent);}
+  h3 .fid{display:inline-block; background:var(--accent); color:#0f1115; font-size:12px; font-weight:700;
+    border-radius:4px; padding:1px 8px; margin-right:8px; vertical-align:2px;}
+  p{margin:8px 0;}
+  p.note,li.note{color:var(--text2); font-size:14px;}
+  .muted{color:var(--text3);}
+  ul,ol{margin:8px 0 8px 22px;}
+  li{margin:5px 0;}
+  table{width:100%; border-collapse:collapse; margin:14px 0; font-size:13.6px;}
+  th{background:var(--panel2); text-align:left; font-weight:600;}
+  th,td{border:1px solid var(--border); padding:8px 11px; vertical-align:top;}
+  tr:nth-child(even) td{background:rgba(255,255,255,.02);}
+  td code,p code,li code{background:rgba(124,154,255,.12); color:#9fb4ff; border-radius:3px;
+    padding:1px 5px; font-family:Consolas,monospace; font-size:12.6px;}
+  .tag{display:inline-block; font-size:12px; border-radius:4px; padding:1px 8px; white-space:nowrap;}
+  .tag.must{background:rgba(232,122,122,.15); color:var(--danger); border:1px solid rgba(232,122,122,.4);}
+  .tag.should{background:rgba(232,176,75,.15); color:var(--warn); border:1px solid rgba(232,176,75,.4);}
+  .tag.could{background:rgba(95,211,154,.15); color:var(--accent2); border:1px solid rgba(95,211,154,.4);}
+  .tag.wont{background:rgba(124,133,152,.15); color:var(--text3); border:1px solid var(--border);}
+  .tag.p0{background:rgba(180,140,232,.15); color:var(--purple); border:1px solid rgba(180,140,232,.4);}
+  .card{background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:16px 20px; margin:14px 0;}
+  .card.hl{border-color:var(--accent);}
+  .card.warnbox{border-color:rgba(232,176,75,.5); background:rgba(232,176,75,.05);}
+  .flow{counter-reset:step; list-style:none; margin:12px 0;}
+  .flow li{position:relative; padding:7px 0 7px 40px;}
+  .flow li::before{counter-increment:step; content:counter(step);
+    position:absolute; left:0; top:7px; width:26px; height:26px; line-height:26px;
+    background:var(--panel2); border:1px solid var(--accent); color:var(--accent);
+    border-radius:50%; font-size:13px; font-weight:700; text-align:center;}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  .grid3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;}
+  @media(max-width:760px){.grid2,.grid3{grid-template-columns:1fr;}}
+  .check li{list-style:none; padding-left:24px; position:relative;}
+  .check li::before{content:"✓"; position:absolute; left:2px; color:var(--accent2); font-weight:700;}
+  .risk-high{color:var(--danger); font-weight:600;}
+  .risk-mid{color:var(--warn); font-weight:600;}
+  .risk-low{color:var(--accent2); font-weight:600;}
+  .gwt{font-size:13.4px; color:var(--text2); background:var(--panel2); border-left:3px solid var(--teal);
+    padding:7px 12px; margin:5px 0; border-radius:0 6px 6px 0;}
+  .gwt b{color:var(--teal); font-weight:600;}
+  .assume{background:rgba(124,154,255,.08); border:1px dashed rgba(124,154,255,.45);
+    border-radius:8px; padding:12px 16px; margin:12px 0; font-size:14px; color:var(--text2);}
+  .assume b{color:var(--accent);}
+  .toc{background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:18px 22px; margin:24px 0;}
+  .toc h4{color:var(--text2); font-size:13px; letter-spacing:2px; margin:0 0 10px;}
+  .toc ol{columns:2; column-gap:32px; margin-left:18px; font-size:14px;}
+  @media(max-width:760px){.toc ol{columns:1;}}
+  .toc a{color:var(--text); text-decoration:none; border-bottom:1px dotted var(--border);}
+  .toc a:hover{color:var(--accent);}
+  .compliance{margin-top:60px; padding-top:16px; border-top:1px solid var(--border); font-size:13px; color:var(--text3);}
+  footer.pagenote{margin-top:20px; font-size:13px; color:var(--text3);}
+  .kbd{background:var(--panel2); border:1px solid var(--border); border-radius:4px;
+    padding:1px 7px; font-size:13px; font-family:Consolas,monospace;}
+  strong{color:#fff;}
+  .st{display:inline-block; font-size:12.4px; padding:1px 7px; border-radius:4px;
+    background:rgba(91,200,200,.12); color:var(--teal); border:1px solid rgba(91,200,200,.35);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="doc">
+  <div class="doc-tag">产品需求文档 · PRD V1.0 · 待评审</div>
+  <h1>Personal AI 学习应用 · 产品需求文档</h1>
+  <p class="sub">项目代号：PAI（暂名）｜版本：V1.0｜日期：2026-10-22｜作者：司南（产品专家）｜上游文档：《Personal AI 学习应用 · 产品设计 V0.1》</p>
+  <p class="sub">项目性质：<strong>个人项目</strong>｜首发领域：<strong>通用学科</strong>｜交付形态：Web 单端</p>
+</header>
+
+<div class="toc">
+  <h4>目录</h4>
+  <ol>
+    <li><a href="#s1">文档信息</a></li>
+    <li><a href="#s2">背景与目标</a></li>
+    <li><a href="#s3">名词与术语</a></li>
+    <li><a href="#s4">需求范围</a></li>
+    <li><a href="#s5">方案对比与选型</a></li>
+    <li><a href="#s6">用户角色与场景</a></li>
+    <li><a href="#s7">功能需求（FR）</a></li>
+    <li><a href="#s8">非功能需求</a></li>
+    <li><a href="#s9">业务流程与状态流转</a></li>
+    <li><a href="#s10">数据与埋点</a></li>
+    <li><a href="#s11">权限与安全</a></li>
+    <li><a href="#s12">异常处理清单</a></li>
+    <li><a href="#s13">上线计划与依赖</a></li>
+    <li><a href="#s14">风险与遗留问题</a></li>
+    <li><a href="#s15">附录（原型 / RTM / 声明）</a></li>
+  </ol>
+</div>
+
+<!-- ==================== 1 ==================== -->
+<h2 id="s1">一、文档信息</h2>
+<table>
+  <tr><th style="width:22%">项目</th><th>内容</th></tr>
+  <tr><td>文档名称</td><td>Personal AI 学习应用 · 产品需求文档（PRD）</td></tr>
+  <tr><td>当前版本</td><td>V1.0</td></tr>
+  <tr><td>项目性质</td><td>个人项目（单人开发，作者本人为首位用户）</td></tr>
+  <tr><td>首发领域</td><td>通用学科（不预设垂直领域，知识本体按需自生长）</td></tr>
+  <tr><td>本期对应版本</td><td>产品版本 V0.5（MVP）</td></tr>
+  <tr><td>作者 / 评审</td><td>司南（产品专家）／待评审（个人项目，作者自评审为主）</td></tr>
+  <tr><td>上游文档</td><td>《Personal AI 学习应用 · 产品设计 V0.1》（2026-10-22，含六功能设计与联动关系）</td></tr>
+</table>
+
+<h4>变更记录</h4>
+<table>
+  <tr><th style="width:10%">版本</th><th style="width:14%">日期</th><th>变更内容</th><th style="width:16%">变更人</th></tr>
+  <tr><td>V0.1</td><td>2026-10-22</td><td>初版产品设计：六大功能定义、联动关系、三条核心旅程、MoSCoW 优先级与版本规划</td><td>司南</td></tr>
+  <tr><td>V1.0</td><td>2026-10-22</td><td>确认「个人项目 + 通用学科」后展开 15 段完整 PRD：补方案对比与选型（记忆建模三方案）、FR 编号与 GWT 验收、数据与埋点、异常清单、依赖三档分级、风险登记册、RTM；按个人项目约束裁剪范围（去掉多租户、权限矩阵、支付相关模块）</td><td>司南</td></tr>
+</table>
+
+<h4>评审记录</h4>
+<table>
+  <tr><th>轮次</th><th>日期</th><th>评审范围</th><th>结论</th><th>遗留</th></tr>
+  <tr><td>R1</td><td class="muted">待定</td><td>全文 15 段 + FR 验收标准</td><td>待评审</td><td>—</td></tr>
+</table>
+
+<!-- ==================== 2 ==================== -->
+<h2 id="s2">二、背景与目标</h2>
+
+<h3>2.1 背景</h3>
+<p>发起人是软件工程专业在校学生，本身是该产品的第一个真实用户。日常学习（专业课程、竞赛备考、自学新技术）中同时暴露三个问题：</p>
+<ul>
+  <li><strong>AI 每次从零开始讲。</strong>同一模型对"什么是特征值"的回答，对零基础和对学过线性代数的人完全一样。用户每次都要手动交代背景（"我已经会 X 了，直接讲 Y"），这是纯粹的重复劳动。</li>
+  <li><strong>讲完即忘，没有沉淀。</strong>对话是一问一答的流水，学完的东西散在几十条消息里，无法整理成可复习、可导出的笔记；下一次遇到同一概念，等于重新学。</li>
+  <li><strong>学习材料无法结构化。</strong>看视频、读 PDF 是被动输入，无法定位"这段讲了什么知识点"、无法标注"这里我没懂"、无法把材料转成可测可复习的讲义。</li>
+</ul>
+<p>结论：<strong>市面 AI 学习工具解决的是"讲得出来"，没有解决"讲给谁"和"讲完之后"。</strong>本项目的差异化只有一个——让 AI 拥有一份持续更新的「学习者知识画像」，并以它为基础决定怎么讲、讲多深、什么时候提醒复习。</p>
+
+<h3>2.2 目标</h3>
+<table>
+  <tr><th style="width:16%">目标层级</th><th>目标描述</th><th>衡量方式</th></tr>
+  <tr><td>产品目标</td><td>让同一概念在第二次、第三次学习时，AI 的讲解明显区别于第一次（更贴合当前水平）</td><td>画像覆盖率 + 讲解采纳率（见 2.3）</td></tr>
+  <tr><td>用户目标</td><td>用户不需要再手动交代"我会什么"，且学完的知识能带走</td><td>笔记产出率 + 划词入库率</td></tr>
+  <tr><td>项目目标（个人）</td><td>先自用跑通闭环，2 周 dogfooding 后决定是否继续投入后续版本</td><td>连续使用天数 + 闭环完成次数</td></tr>
+</table>
+
+<h3>2.3 成功指标与口径</h3>
+<div class="assume">
+  <b>口径说明：</b>以下全部为<strong>估算初始目标值</strong>，无历史数据支撑，上线后按首月真实数据校准；统计周期默认为 7 天滚动窗口（除非另注）。个人项目阶段指标用途是「指导迭代决策」而非对外承诺。
+</div>
+<table>
+  <tr><th style="width:20%">指标</th><th style="width:34%">口径（计算公式）</th><th style="width:12%">初始目标</th><th>说明</th></tr>
+  <tr><td><strong>闭环完成次数</strong>（北极星）</td><td>同一会话内完成「提问 → 获得讲解 → 生成笔记」且 7 日内完成至少 1 次复习任务的次数</td><td>≥3 次 / 周</td><td>验证"学习闭环"是否真的成立，而不是零散问答</td></tr>
+  <tr><td>画像覆盖率</td><td>有画像条目的知识点数 ÷ 对话中出现的知识点总数</td><td>≥60%</td><td>低于此值说明记忆没形成，差异化不成立</td></tr>
+  <tr><td>讲解采纳率</td><td>被用户接受（未点"再详细些/太啰嗦/换种讲法"）的讲解数 ÷ 讲解总数</td><td>≥80%</td><td>核心体验质量信号，直接对应深度判定是否准确</td></tr>
+  <tr><td>笔记产出率</td><td>生成过笔记的会话数 ÷ 总会话数</td><td>≥30%</td><td>衡量"沉淀"是否发生</td></tr>
+  <tr><td>划词入库率</td><td>划词后点击"加入笔记"的次数 ÷ 划词总次数</td><td>≥15%</td><td>衡量划词是"有用补漏"还是"好奇点一下"</td></tr>
+  <tr><td>单会话成本</td><td>单次会话 LLM 调用总费用（含画像注入与笔记生成）</td><td>≤ ¥0.5（估算）</td><td>个人项目成本红线，超线触发降级策略（见 FR-09）</td></tr>
+  <tr><td>首字响应时延</td><td>用户发送消息 → 首个 token 渲染的 P95 时延</td><td>≤3s</td><td>体验基线，超过则体感"卡"</td></tr>
+</table>
+
+<!-- ==================== 3 ==================== -->
+<h2 id="s3">三、名词与术语定义</h2>
+<table>
+  <tr><th style="width:20%">术语</th><th>定义</th></tr>
+  <tr><td>知识画像</td><td>系统对用户掌握情况的显式建模结果，由若干「画像条目」组成，每条对应一个知识点及其掌握度、证据来源、最近接触时间</td></tr>
+  <tr><td>画像条目</td><td>最小记忆单元：<code>{知识点, 掌握度 0–1, 证据来源列表, 最近接触时间, 状态}</code></td></tr>
+  <tr><td>知识点</td><td>可独立讲解的概念单元（如"导数""特征值""TCP 三次握手"），含所属领域与前置依赖关系</td></tr>
+  <tr><td>前置依赖</td><td>讲解知识点 X 之前建议先具备的知识点集合，用于判断是否需要补基础</td></tr>
+  <tr><td>掌握度</td><td>0–1 的数值，表达对该知识点的掌握概率估计；初始规则见 FR-03</td></tr>
+  <tr><td>讲解深度档</td><td>L0 一句话＋类比｜L1 定义＋例子｜L2 原理＋推导｜L3 数学形式＋边界＋反例</td></tr>
+  <tr><td>消息修订</td><td>用户编辑某条历史消息，触发后续 AI 响应基于新内容重新生成；旧响应折叠保留</td></tr>
+  <tr><td>结构化讲义</td><td>由对话或素材生成的可复习文档，含标题、总结、核心概念、例子、误区、延伸问题，每条带溯源锚点</td></tr>
+  <tr><td>溯源锚点</td><td>讲义条目到原始位置的引用指针（对话消息 ID 或页码/时间戳），点击可跳回原文</td></tr>
+  <tr><td>划词</td><td>用户在阅读视图内选中一段文本，触发即时解答浮层</td></tr>
+  <tr><td>主动任务</td><td>系统在用户未发起请求时生成并推送的辅助动作（复习提醒、讲后小结等），受行为约束与频控限制</td></tr>
+  <tr><td>降级</td><td>主链路能力不可用时的退路方案（如模型超时 → 返回历史缓存讲解而非报错）</td></tr>
+  <tr><td>Token 预算</td><td>单会话可消耗的模型 token 上限，超限时压缩注入的画像与历史上下文</td></tr>
+</table>
+
+<!-- ==================== 4 ==================== -->
+<h2 id="s4">四、需求范围</h2>
+
+<h3>4.1 本期包含（产品版本 V0.5 · MVP）</h3>
+<table>
+  <tr><th style="width:16%">模块</th><th>范围</th><th style="width:14%">优先级</th></tr>
+  <tr><td>基础框架</td><td>单账号登录（或本地单用户模式）、会话列表、对话页、笔记页、画像页、设置页</td><td><span class="tag must">Must</span></td></tr>
+  <tr><td>F2 对话与笔记</td><td>流式对话、历史消息编辑与重新生成、结构化笔记生成、Markdown 导出</td><td><span class="tag must">Must</span></td></tr>
+  <tr><td>F1-Lite 知识画像</td><td>画像条目采集与存储、掌握度初始规则、L0–L2 三档深度自适应、画像查看与手动纠错</td><td><span class="tag must">Must</span></td></tr>
+  <tr><td>F6 划词解答</td><td>阅读视图划词、即时解答浮层（含"换种说法"）、加入笔记、信号回流画像</td><td><span class="tag must">Must</span></td></tr>
+  <tr><td>成本与安全</td><td>Token 预算控制、降级策略、数据导出与删除</td><td><span class="tag must">Must</span></td></tr>
+</table>
+
+<h3>4.2 后续版本（明确排期外，触发条件达成才启动）</h3>
+<table>
+  <tr><th style="width:16%">功能</th><th>内容</th><th style="width:24%">启动触发条件</th></tr>
+  <tr><td>F3 可视化</td><td>流程图 / 几何图 / 函数图（静态 SVG）；后续交互式图形</td><td>MVP 的讲解采纳率 ≥80% 稳定 2 周（说明讲解本身已过关，再加强表达）</td></tr>
+  <tr><td>F5 素材总结</td><td>PDF → 结构化讲义；后续视频链接</td><td>笔记导出被真实使用 ≥5 次/周（证明讲义消费习惯存在）</td></tr>
+  <tr><td>F4 主动助理</td><td>讲后小结、间隔复习提醒；后续缺口诊断与周报</td><td>已有笔记存量 ≥20 篇（没有存量，复习无从谈起）</td></tr>
+  <tr><td>L3 深度档</td><td>数学形式 + 边界 + 反例讲解</td><td>出现 ≥10 次用户主动要求"讲深一点"</td></tr>
+</table>
+
+<h3>4.3 明确不做（Won't）</h3>
+<div class="card warnbox">
+  <p><strong>以下项目本期及可见未来不做，防止范围蔓延：</strong></p>
+  <ul>
+    <li><strong>多用户 / 多租户 / 权限矩阵</strong>——个人项目无第二个角色，做成"可开放注册"会引入数据隔离、权限校验、计费等一整套成本，且对验证核心假设零帮助。</li>
+    <li><strong>移动端 App / 浏览器插件 / 多端同步</strong>——同步冲突处理是独立的工程课题，MVP 阶段 Web 单端足够验证价值。</li>
+    <li><strong>支付 / 订阅 / 商业化</strong>——本期无商业模式假设。</li>
+    <li><strong>社区、分享、UGC 内容广场</strong>。</li>
+    <li><strong>多语言 / 国际化</strong>——界面中文，内容按用户提问语言回答。</li>
+    <li><strong>预置全学科知识图谱</strong>——通用学科的图谱不可能人工建全，改为「按需自生长」（见 5.3 推荐方案）。</li>
+  </ul>
+</div>
+
+<!-- ==================== 5 ==================== -->
+<h2 id="s5">五、方案对比与选型说明</h2>
+<p>本产品全部差异化的技术落点只有一个：<strong>如何建模"用户已经会什么"</strong>。这个选型决定后续所有功能形态，必须先定。以下为三个候选方案（成本/工期为个人项目单人开发的相对量级估算）。</p>
+
+<table>
+  <tr><th style="width:14%">方案</th><th>实现思路</th><th style="width:9%">成本</th><th style="width:9%">复杂度</th><th style="width:9%">体验</th><th style="width:9%">风险</th><th style="width:9%">上线速度</th><th>综合评价</th></tr>
+  <tr>
+    <td><strong>A. 纯向量检索记忆</strong></td>
+    <td>把历史对话切片入库，每次讲解前检索相关片段注入上下文，让模型自行"回忆"用户水平</td>
+    <td>低</td><td>低</td><td>中</td><td>高</td><td>快</td>
+    <td>实现最快，但<strong>不可解释、不可纠错、会被幻觉污染</strong>：模型可能"回忆"出用户没说过的话，且用户无法查看/修正系统对自己的认知</td>
+  </tr>
+  <tr>
+    <td><strong>B. 纯结构化画像</strong></td>
+    <td>维护知识点表 + 掌握度分数，全部决策基于分数规则，不检索原文</td>
+    <td>中</td><td>中</td><td>好</td><td>中</td><td>中</td>
+    <td>可解释、可纠错，但<strong>缺少原文支撑</strong>：画像说"已掌握极限"，却答不出用户当时是怎么理解的，讲解无法引用先前语境</td>
+  </tr>
+  <tr>
+    <td><strong>C. 双轨：结构化画像做决策 + 原文片段做溯源</strong>（推荐）</td>
+    <td>画像条目负责"讲多深"的决策，每条条目挂载证据片段（对话消息 ID / 页码）；讲解时按需检索证据原文注入，不注入全量历史</td>
+    <td>中</td><td>中高</td><td>好</td><td>低</td><td>中</td>
+    <td><strong>推荐</strong>：决策链路可解释（为什么这么讲）、可纠错（用户改分数）、可溯源（引用当时原话），同时通过"只检索证据片段"控制 token 成本</td>
+  </tr>
+</table>
+
+<h3>5.1 推荐结论</h3>
+<p>选择<strong>方案 C</strong>。理由三条：</p>
+<ol>
+  <li><strong>方案的差异化本质是"可信的记忆"。</strong>方案 A 的记忆不可见不可改，一旦模型记错（把用户问过的问题当成已掌握），用户无从发现，产品最核心的卖点直接崩塌。C 的每条记忆都有证据与来源，错了好改。</li>
+  <li><strong>成本可控。</strong>C 的注入策略是"画像摘要 + 命中证据片段"，而非 A 的"检索一堆历史对话"或全量回放，单会话成本上限可预估、可封顶（对应 FR-09 的 Token 预算）。</li>
+  <li><strong>为后续功能留接口。</strong>F5 素材总结需要"按画像裁剪讲义详略"、F4 复习需要"按掌握度与时间排期"，都要求掌握度是可计算的数值而非语言描述——只有结构化画像能提供。</li>
+</ol>
+
+<h3>5.2 不选其他方案的原因</h3>
+<ul>
+  <li><strong>不选 A</strong>：看似省事，实则把"记忆准确性"完全交给模型，且无法满足"用户可查看/纠错"这一合规与体验双重要求。</li>
+  <li><strong>不选 B</strong>：剖面缺一半——只有"结论"没有"依据"，讲解时无法引用用户此前的原话，复习时也无原文可回看。</li>
+</ul>
+
+<h3>5.3 演进路径</h3>
+<table>
+  <tr><th style="width:14%">阶段</th><th>记忆策略</th><th style="width:30%">升级触发条件</th></tr>
+  <tr><td>本期 V0.5</td><td>结构化画像 + 关键词命中证据片段（不上向量库，降低依赖）</td><td>—</td></tr>
+  <tr><td>V0.6</td><td>引入向量检索替换关键词命中，提升证据召回质量</td><td>关键词命中导致"该引用的没引用"出现 ≥5 次</td></tr>
+  <tr><td>V1.0</td><td>知识点依赖图自动扩展（新概念自动挂接前置依赖），支持跨会话知识链追溯</td><td>画像条目数 ≥100 且出现明显的"前置缺失"讲解失败</td></tr>
+</table>
+
+<!-- ==================== 6 ==================== -->
+<h2 id="s6">六、用户角色与使用场景</h2>
+
+<h3>6.1 用户角色</h3>
+<table>
+  <tr><th style="width:14%">角色</th><th style="width:18%">身份</th><th>核心目标</th><th>典型痛点</th><th style="width:12%">能力水平</th></tr>
+  <tr>
+    <td><strong>自学者（P0）</strong></td>
+    <td>在校学生 / 转行学习者，18–25 岁，通用学科（数学、计算机、专业课）</td>
+    <td>把一个不懂的概念真正学会，并且学完不丢</td>
+    <td>每次都要交代背景；学完散在对话里；复习无抓手</td>
+    <td>熟悉数字产品，中高</td>
+  </tr>
+  <tr>
+    <td><strong>作者本人（P0，首位用户）</strong></td>
+    <td>项目开发者，兼运维</td>
+    <td>跑通闭环并判断是否值得继续投入</td>
+    <td>单人开发，时间与 API 成本有限</td>
+    <td>全栈，高</td>
+  </tr>
+  <tr>
+    <td class="muted">备考者（P1，后续）</td>
+    <td class="muted">考试备考人群</td>
+    <td class="muted">高频复习与薄弱点定位</td>
+    <td class="muted">复习缺乏节奏</td>
+    <td class="muted">中</td>
+  </tr>
+</table>
+
+<h3>6.2 核心使用场景（本期交付）</h3>
+<div class="grid2">
+  <div class="card">
+    <h4>场景 A：概念学习闭环（主场景）</h4>
+    <p class="note">触发：学习中遇到不懂的概念。频率：每日 1–5 次。</p>
+    <p>用户提问 → AI 按画像判定深度讲解 → 用户编辑追问 / 要求换讲法 → 满意后存为笔记 → 画像更新。</p>
+    <p class="note"><strong>成功标准：</strong>用户不需要说"我已经会 X 了"就能得到合适深度的讲解。</p>
+  </div>
+  <div class="card">
+    <h4>场景 B：笔记阅读与补漏（次场景）</h4>
+    <p class="note">触发：复习已生成笔记时遇到遗忘的术语。频率：每周 2–5 次。</p>
+    <p>打开笔记 → 划选不认识的词 → 浮层获得简短解释 → "加入笔记"沉淀为术语表条目 / "深入讲解"进入对话。</p>
+    <p class="note"><strong>成功标准：</strong>补漏不打断阅读流，且补的漏进入长期记忆。</p>
+  </div>
+</div>
+<div class="card">
+  <h4>场景 C：画像校准（低频但关键）</h4>
+  <p class="note">触发：AI 明显讲错深度（讲太浅/太深）。频率：每周 1–2 次。</p>
+  <p>用户打开画像页 → 查看某知识点的掌握度与来源证据 → 手动下调/上调 → 后续讲解立即改变。</p>
+  <p class="note"><strong>成功标准：</strong>用户能在 30 秒内纠正一条错误认知，且不觉得这是"在配置软件"。</p>
+</div>
+
+<h3>6.3 用户故事（INVEST 校验通过）</h3>
+<table>
+  <tr><th style="width:8%">编号</th><th>用户故事</th><th style="width:30%">验收标准（GWT 摘要）</th></tr>
+  <tr><td>US-01</td><td>作为自学者，我想要 AI 直接按我的水平讲，以便不再重复交代背景</td><td>Given 画像中"极限"掌握度 0.8，When 问"什么是导数"，Then 讲解以极限为已知基础切入，不重讲极限</td></tr>
+  <tr><td>US-02</td><td>作为自学者，我想要修改自己前面说过的话并让 AI 重答，以便纠正问偏的问题</td><td>Given 一段 5 轮对话，When 编辑第 2 条并重生成，Then 后续响应基于新内容，其他消息不受影响，旧响应可回看</td></tr>
+  <tr><td>US-03</td><td>作为自学者，我想要把一段对话变成可导出的笔记，以便复习和带走</td><td>Given 一段对话，When 点"存为笔记"，Then 生成含标题/总结/概念/例子的讲义，导出 Markdown 可读且锚点保留</td></tr>
+  <tr><td>US-04</td><td>作为自学者，我在读笔记时遇到不认识的词想立刻知道意思</td><td>Given 笔记正文，When 划选"特征值"，Then 1.5s 内浮层给出简短解释，可一键加入术语表</td></tr>
+  <tr><td>US-05</td><td>作为自学者，我想要看到 AI 对我的认知并纠正它，以便不被错误记忆误导</td><td>Given 画像页某条目，When 手动将掌握度从 0.8 改为 0.4，Then 下次讲解回到基础档，变更留痕可追溯</td></tr>
+</table>
+
+<!-- ==================== 7 ==================== -->
+<h2 id="s7">七、功能需求（FR）</h2>
+<p class="note">状态词统一：<strong>必须</strong>（shall）＝本期不可缺；<strong>应该</strong>（should）＝本期强力建议；<strong>可以</strong>（may）＝本期可选；<strong>禁止</strong>（must not）＝红线。</p>
+
+<h3><span class="fid">FR-01</span>基础框架与数据归属</h3>
+<table>
+  <tr><th style="width:18%">项</th><th>内容</th></tr>
+  <tr><td>描述</td><td>系统必须提供会话列表、对话页、笔记页、画像页、设置页五类页面；用户数据归当前用户所有，可随时导出与删除</td></tr>
+  <tr><td>业务规则</td><td>① 本期采用单账号模式（个人项目），但数据结构必须预留 <code>user_id</code>，禁止把用户身份硬编码进业务表<br>② 会话、笔记、画像条目在删除时必须级联清理（禁止留下孤儿数据）<br>③ 所有页面在无数据时必须有空状态文案与引导入口</td></tr>
+</table>
+<div class="gwt"><b>AC-01-1</b> Given 新用户首次进入，When 打开会话列表，Then 展示空状态与"开始第一个对话"入口，不显示报错。<br>
+<b>AC-01-2</b> Given 某会话下存在笔记与画像证据，When 删除该会话，Then 关联笔记标记为「来源已删除」并保留正文（禁止静默丢失用户内容），画像条目的该条证据被移除并重算掌握度。</div>
+
+<h3><span class="fid">FR-02</span>可编辑对话流</h3>
+<table>
+  <tr><th style="width:18%">项</th><th>内容</th></tr>
+  <tr><td>描述</td><td>用户必须能对任意历史消息执行「编辑」「追加补充」「让 AI 重新响应」；系统必须支持流式输出与消息级重新生成</td></tr>
+  <tr><td>业务规则</td><td>① 编辑某条消息后，系统必须基于编辑后的内容重新生成后续响应，并将原响应折叠保留（可见但默认收起）<br>② 重新生成必须生成新版本而非覆盖（保留 <code>revision</code> 字段，可回退）<br>③ 编辑不得影响该消息之前的历史<br>④ 单条消息重新生成必须二次确认（避免误触丢失已有回答）<br>⑤ 流式输出中断（网络断/用户取消）时，已输出内容必须保留并标注"未完成"，提供重试</td></tr>
+</table>
+<div class="gwt"><b>AC-02-1</b> Given 一段 6 轮对话，When 用户编辑第 2 条并选择重新生成，Then 第 3 轮起的响应被新版替换，第 1 条与用户未触及的后续消息不受影响，旧版可通过"查看历史版本"回看。<br>
+<b>AC-02-2</b> Given 流式生成中网络中断，When 恢复连接，Then 页面显示已生成内容 + "生成中断"提示 + 重试按钮，不出现整段空白或重复发送用户消息。</div>
+
+<h3><span class="fid">FR-03</span>自适应讲解（画像驱动，核心）</h3>
+<table>
+  <tr><th style="width:18%">项</th><th>内容</th></tr>
+  <tr><td>描述</td><td>系统必须在每次讲解前读取画像，判定讲解深度档，并可按用户反馈即时调整</td></tr>
+  <tr><td>业务规则</td><td>① <strong>前置检查</strong>：识别当前提问涉及的知识点 X 及其前置依赖 D₁…Dₙ；若存在依赖掌握度 &lt;0.7，必须先用 1–2 句补齐该依赖再讲 X<br>② <strong>深度判定</strong>：X 掌握度 &lt;0.3 → L0/L1；0.3–0.7 → L1/L2；≥0.7 → L2 并只讲增量（边界、延伸、易错点），禁止重复基础<br>③ <strong>掌握度初始规则（估算值，按数据调参）</strong>：首次出现 0.3；对话中正确应用 +0.2（上限 0.7）；通过复述/自测 0.9；90 天未接触衰减 0.1（下限 0.1）<br>④ <strong>反馈闭环</strong>：讲解下方必须固定提供「再详细些 / 太啰嗦 / 换种讲法」三个入口，点击后立即重新生成并更新画像（对应知识点掌握度 ±0.15）<br>⑤ <strong>可解释</strong>：讲解可展开"为什么这么讲"，展示依据的画像条目<br>⑥ <strong>禁止</strong>：无任何画像证据时不得声称"根据你已掌握的内容"</td></tr>
+</table>
+<div class="gwt"><b>AC-03-1</b> Given 画像中"矩阵乘法"掌握度 0.2、"特征值"无记录，When 用户问"什么是特征值"，Then 讲解先补矩阵乘法一句话再进 L1 档讲解。<br>
+<b>AC-03-2</b> Given 用户点击「太啰嗦」，When 重新生成完成，Then 新讲解深度档下降一级，且该知识点掌握度上调 0.15（表示系统此前低估）。<br>
+<b>AC-03-3</b> Given 画像为空（新用户），When 首次提问，Then 使用 L1 默认档，且不出现"根据你的掌握情况"类表述。</div>
+
+<h3><span class="fid">FR-04</span>画像查看与纠错</h3>
+<table>
+  <tr><th style="width:18%">项</th><th>内容</th></tr>
+  <tr><td>描述</td><td>用户必须能查看全部画像条目、掌握度、证据来源，并手动修改或删除</td></tr>
+  <tr><td>业务规则</td><td>① 画像页按领域分组，展示知识点名、掌握度（数值 + 可视化条）、最近接触时间、证据数<br>② 每条必须可展开查看证据（跳转到对应对话消息或笔记位置）<br>③ 支持手动上调/下调掌握度（步长 0.1）与删除条目；<strong>手动修改优先级高于系统推断</strong>，30 天内不被自动覆盖（可配置）<br>④ 禁止在无证据情况下自动写入画像条目（每条必须有 <code>evidence_ref</code>）<br>⑤ 所有变更留痕（时间、原值、新值、来源：系统推断 / 用户修改）</td></tr>
+</table>
+<div class="gwt"><b>AC-04-1</b> Given 某条目由系统推断掌握度 0.8，When 用户手动改为 0.4，Then 画像页显示"由用户设定"，且 30 天内系统推断不覆盖该值。<br>
+<b>AC-04-2</b> Given 用户删除某画像条目，When 再次提问该知识点，Then 系统按"无记录"处理（L1 默认档），不残留旧判定。</div>
+
+<h3><span class="fid">FR-05</span>结构化笔记生成与导出</h3>
+<table>
+  <tr><th style="width:18%">项</th><th>内容</th></tr>
+  <tr><td>描述</td><td>用户必须能将选定对话段一键生成结构化讲义，并导出为 Markdown</td></tr>
+  <tr><td>业务规则</td><td>① 生成范围：整个会话或用户框选的消息段<br>② 讲义结构必须包含：标题、一句话总结、核心概念（每条含定义＋溯源锚点）、例子、常见误区、延伸问题<br>③ 每条核心概念必须挂溯源锚点，点击可跳回对话原位置<br>④ 生成过程中必须展示进度；失败时保留已生成部分并允许重试<br>⑤ 导出 Markdown 必须保留层级标题、锚点（以链接形式）与代码块格式；导出文件名为「会话标题-日期」<br>⑥ 笔记可二次编辑，<strong>编辑后不得静默覆盖原对话</strong>（单向引用关系）</td></tr>
+</table>
+<div class="gwt"><b>AC-05-1</b> Given 一段 12 轮对话，When 生成笔记，Then 输出的讲义含 ≥3 条核心概念，每条可点击跳回源消息。<br>
+<b>AC-05-2</b> Given 笔记已生成，When 导出 Markdown，Then 文件可直接被常见 Markdown 编辑器渲染，标题层级正确，锚点链接可点击定位。<br>
+<b>AC-05-3</b> Given 笔记生成中途失败，When 用户重试，Then 已生成章节不重复出现（幂等）。</div>
+
+<h3><span class="fid">FR-06</span>划词即时解答</h3>
+<table>
+  <tr><th style="width:18%">项</th><th>内容</th></tr>
+  <tr><td>描述</td><td>用户必须能在笔记阅读视图内划选文本，获得按画像深度调整的即时解释</td></tr>
+  <tr><td>业务规则</td><td>① 作用域仅限笔记阅读视图，禁止全局劫持文本选择（不干扰复制）<br>② 浮层必须在 1.5s 内出现（先出骨架，内容可流式补齐）<br>③ 浮层包含：简短解释（60–120 字，深度按画像）、「加入笔记」「深入讲解」「换种说法」三个操作、以及原文复制出口<br>④ 划选超过 200 字时禁止直接解释，改为提示"是否总结此段"<br>⑤ 无匹配结果时必须明示"未找到相关解释"，禁止编造<br>⑥ 每次划词必须写入画像信号（该术语接触 +1）</td></tr>
+</table>
+<div class="gwt"><b>AC-06-1</b> Given 笔记正文，When 划选"特征值"并停留，Then 1.5s 内浮层展示解释，且解释深度与该词在画像中的掌握度一致。<br>
+<b>AC-06-2</b> Given 用户划选 300 字段落，When 释放鼠标，Then 不出现解释，出现"是否总结此段"提示。<br>
+<b>AC-06-3</b> Given 划选内容为无意义字符串，When 请求解释，Then 明确回复未找到，不生成杜撰内容。</div>
+
+<h3><span class="fid">FR-07</span>划词结果加入笔记</h3>
+<table>
+  <tr><th style="width:18%">项</th><th>内容</th></tr>
+  <tr><td>描述</td><td>用户必须能将划词解答一键沉淀进当前笔记，并可从笔记跳回划词位置</td></tr>
+  <tr><td>业务规则</td><td>① 加入位置：当前笔记自动创建的「术语表」章节末尾，或用户指定位置<br>② 条目格式：术语 + 解释 + 来源（笔记名 + 定位）<br>③ 同一术语重复加入时必须提示"已存在"，可选择更新解释或跳过（禁止产生重复条目）<br>④ 加入操作必须可撤销（提供 5 秒内撤销入口）</td></tr>
+</table>
+<div class="gwt"><b>AC-07-1</b> Given 笔记中已存在"特征值"术语条目，When 用户再次划词并点击加入，Then 提示已存在并提供"更新解释"，术语表条目数不变。<br>
+<b>AC-07-2</b> Given 用户点击加入后 5 秒内点撤销，Then 术语表恢复到操作前状态。</div>
+
+<h3><span class="fid">FR-08</span>画像信号采集与更新</h3>
+<table>
+  <tr><th style="width:18%">项</th><th>内容</th></tr>
+  <tr><td>描述</td><td>系统必须从五类行为中采集学习信号并更新画像</td></tr>
+  <tr><td>业务规则</td><td>信号源与权重（估算，需按数据校准）：
+    <br>① 提问/追问（识别"什么是 X"类问题 → X 标记为低掌握）——权重 0.3
+    <br>② 讲解后的深度反馈（太啰嗦/再详细些）——权重 0.4（直接反映系统误判）
+    <br>③ 划词行为（术语接触）——权重 0.1
+    <br>④ 笔记生成（提及某概念 → 参与接触）——权重 0.1
+    <br>⑤ 用户手动纠错——权重 1.0（最高优先，30 天内不被覆盖）
+    <br>每次更新必须写入变更日志；单次更新幅度上限 0.2，防止单条信号造成剧烈误判。</td></tr>
+</table>
+<div class="gwt"><b>AC-08-1</b> Given 用户在某会话中连续 3 次要求"再详细些"，When 第三次反馈完成，Then 该知识点掌握度累计下调（但总幅度不超过规则上限），且后续讲解深度档下降。<br>
+<b>AC-08-2</b> Given 任意画像更新，When 查看变更为日志，Then 可见时间、原值、新值、信号类型四要素。</div>
+
+<h3><span class="fid">FR-09</span>成本与降级控制</h3>
+<table>
+  <tr><th style="width:18%">项</th><th>内容</th></tr>
+  <tr><td>描述</td><td>系统必须控制单会话 token 消耗，并在超限或模型异常时执行降级而非直接报错</td></tr>
+  <tr><td>业务规则</td><td>① 单会话 token 预算上限可配置（默认按目标成本 ¥0.5/会话反推）<br>② 超出 80% 预算时：压缩注入画像（只注入 Top-K 相关条目）、截断非必要历史<br>③ 超出 100% 预算时：提示用户"本次会话较长，建议开启新会话"，并保留当前会话可读<br>④ 模型超时/限流时的降级顺序：重试（1 次，指数退避）→ 切换备用模型 → 返回缓存/历史相近讲解并标注 → 明确失败提示<br>⑤ 禁止在降级时静默返回低质量内容而不标注差别</td></tr>
+</table>
+<div class="gwt"><b>AC-09-1</b> Given 单会话消耗达预算 80%，When 用户继续提问，Then 系统按压缩策略注入上下文，响应正常但画像注入条目数减少（可在调试面板查看）。<br>
+<b>AC-09-2</b> Given 主模型返回 429，When 触发降级，Then 用户看到"已切换备用模型"提示，而非"系统繁忙"。</div>
+
+<h3>7.8 AI 能力专项（六模块）</h3>
+<table>
+  <tr><th style="width:16%">模块</th><th>本产品定义</th></tr>
+  <tr><td>任务定义</td><td>谁：学习者；何时：遇到不懂的概念或复习遗忘点时；基于：当前提问 + 画像条目 + 命中证据片段；目标：给出**贴合当前水平**的解释，并留下可复习的结构化产物；AI 定位是"讲解者 + 整理者"，<strong>不是替用户学习</strong>（最终判断与笔记取舍由用户完成）</td></tr>
+  <tr><td>输入与上下文契约</td><td>输入包含：用户消息、画像摘要（Top-K 相关条目）、命中证据片段（≤3 条）、当前笔记上下文（若从笔记发起）。<strong>冲突处理</strong>：用户当下表述与画像冲突时以用户当下为准并立即修正画像；缺失关键信息（如前置概念完全未知）时先用一句话补齐而非追问；超长输入按段落摘要后进入</td></tr>
+  <tr><td>输出契约</td><td>讲解：结构化 markdown（概念 / 例子 / 易错点 / 与已学内容的连接），深度档显式标注；笔记：固定六段结构（标题/总结/核心概念/例子/误区/延伸），每条核心概念必带 <code>evidence_ref</code>。禁止输出：无来源的确定性断言、超出学科范围的投资/医疗建议、编造引用文献</td></tr>
+  <tr><td>质量标准与验收样本</td><td>质量维度：事实正确 / 深度档匹配 / 结构合规 / 溯源可验证 / 无幻觉。<br>验收样本集：≥20 条，覆盖「常见概念」「画像命中」「画像冲突」「前置缺失」「超长输入」「无匹配划词」「拒答场景」七类；每类给可接受/不可接受样例。<br>量化阈值（估算）：事实正确率 ≥95%（20 条抽样人工校验）、深度档判定与用户反馈一致率 ≥80%、溯源锚点有效率 =100%</td></tr>
+  <tr><td>异常降级与人工接管</td><td>见 FR-09 降级顺序；划词无匹配 → 明示未知；画像冲突 → 以用户为准 + 修正；模型拒答 → 说明原因并给替代路径（换角度提问建议）。由于是个人单用户产品，无"人工客服接管"，改为「用户即接管者」：所有降级点必须提供清晰的手动操作出口</td></tr>
+  <tr><td>反馈与版本闭环</td><td>字段级反馈：深度反馈（三按钮）、笔记条目编辑记录、划词"换种说法"次数。<br>每条生成结果关联：<code>model_version</code> / <code>prompt_version</code> / <code>profile_snapshot_id</code>，可复现当时为什么这样讲；灰度对比按 prompt_version 分组统计采纳率</td></tr>
+</table>
+
+<!-- ==================== 8 ==================== -->
+<h2 id="s8">八、非功能需求</h2>
+<table>
+  <tr><th style="width:16%">类别</th><th style="width:26%">指标</th><th style="width:14%">目标值</th><th>口径与说明</th></tr>
+  <tr><td rowspan="4">性能</td><td>首字响应时延（P95）</td><td>≤3s</td><td>发送请求 → 首 token 渲染；流式输出必须启用</td></tr>
+  <tr><td>划词浮层出现时延（P90）</td><td>≤1.5s</td><td>鼠标释放 → 浮层骨架可见（内容可后续补齐）</td></tr>
+  <tr><td>笔记生成耗时</td><td>≤20s（30 轮对话）</td><td>点击生成 → 完成；超时必须显示进度百分比</td></tr>
+  <tr><td>画像页加载</td><td>≤1s（≤500 条目）</td><td>首屏条目列表；超过 500 条需分页/虚拟滚动</td></tr>
+  <tr><td rowspan="2">成本</td><td>单会话成本</td><td>≤¥0.5（估算）</td><td>含画像注入、讲解、笔记生成全部调用；每日总预算上限可配置，超限提示并暂停非必要调用</td></tr>
+  <tr><td>笔记生成单次成本</td><td>≤¥0.2（估算）</td><td>按 30 轮对话估算</td></tr>
+  <tr><td>可靠性</td><td>数据持久化</td><td>写入即持久</td><td>用户消息、笔记、画像写入失败必须显式提示，禁止静默丢失</td></tr>
+  <tr><td>兼容性</td><td>浏览器</td><td>Chrome / Edge 最新两个大版本</td><td>桌面优先（≥1280px 宽）；移动端仅保证可读（本期不做适配优化）</td></tr>
+  <tr><td>可访问性</td><td>基础可用</td><td>达标</td><td>关键操作键盘可达、正文对比度 ≥4.5:1、图片/图形有替代文本</td></tr>
+  <tr><td>可维护性</td><td>日志与追溯</td><td>必达</td><td>每次 AI 调用记录 model/prompt 版本、token 用量、时延；保留 30 天</td></tr>
+</table>
+
+<!-- ==================== 9 ==================== -->
+<h2 id="s9">九、业务流程与状态流转</h2>
+
+<h3>9.1 主流程：概念学习闭环（对应场景 A）</h3>
+<div class="card hl">
+  <ol class="flow">
+    <li>用户发送提问 → 系统识别知识点 X 与前置依赖 D</li>
+    <li>读取画像 → 判定深度档 → 组装上下文（画像 Top-K + 证据片段）→ 流式生成讲解</li>
+    <li>用户反馈：满意（继续）／太啰嗦／再详细些／换种讲法 → 后三者触发重新生成 + 画像更新</li>
+    <li>用户点「存为笔记」→ 选择范围 → 生成结构化讲义（带溯源锚点）</li>
+    <li>画像更新（讲解涉及的知识点全部计入接触记录）</li>
+    <li>后续进入笔记阅读场景（场景 B），划词补漏回流</li>
+  </ol>
+</div>
+
+<h3>9.2 状态机</h3>
+<h4>① 消息状态</h4>
+<table>
+  <tr><th style="width:16%">状态</th><th style="width:26%">触发事件</th><th style="width:28%">迁移条件</th><th>允许操作</th></tr>
+  <tr><td><span class="st">正常</span></td><td>生成完成</td><td>用户编辑 → 已编辑；重生成 → 已重生成</td><td>编辑 / 追加 / 重生成 / 复制 / 折叠</td></tr>
+  <tr><td><span class="st">流式中</span></td><td>用户发送或重生成</td><td>完成 → 正常；中断 → 未完成；取消 → 未完成</td><td>取消生成</td></tr>
+  <tr><td><span class="st">未完成</span></td><td>网络中断 / 用户取消 / 超时</td><td>重试成功 → 正常</td><td>重试 / 保留 / 删除</td></tr>
+  <tr><td><span class="st">已编辑</span></td><td>用户修改内容</td><td>触发重生成 → 后续消息进入已重生成</td><td>查看历史 / 重生成 / 还原</td></tr>
+  <tr><td><span class="st">已重生成</span></td><td>基于编辑后的内容重新响应</td><td>再次编辑 → 循环；确认 → 正常</td><td>查看旧版 / 切换版本</td></tr>
+</table>
+
+<h4>② 笔记状态</h4>
+<table>
+  <tr><th style="width:16%">状态</th><th style="width:26%">触发事件</th><th style="width:28%">迁移条件</th><th>允许操作</th></tr>
+  <tr><td><span class="st">生成中</span></td><td>用户点「存为笔记」</td><td>成功 → 草稿；失败 → 生成失败</td><td>取消</td></tr>
+  <tr><td><span class="st">草稿</span></td><td>生成成功</td><td>用户编辑保存 → 草稿；导出 → 已发布</td><td>编辑 / 重新生成 / 删除 / 导出</td></tr>
+  <tr><td><span class="st">已发布</span></td><td>首次导出或手动标记</td><td>继续编辑 → 草稿（生成新版本）</td><td>导出 / 编辑 / 查看版本</td></tr>
+  <tr><td><span class="st">生成失败</span></td><td>模型异常 / 超时</td><td>重试成功 → 草稿</td><td>重试 / 查看已生成部分 / 删除</td></tr>
+  <tr><td><span class="st">来源已删除</span></td><td>源会话被删除</td><td>终态（内容保留，标记来源缺失）</td><td>阅读 / 导出 / 删除</td></tr>
+</table>
+
+<h4>③ 画像条目状态</h4>
+<table>
+  <tr><th style="width:16%">状态</th><th style="width:26%">触发事件</th><th style="width:28%">迁移条件</th><th>允许操作</th></tr>
+  <tr><td><span class="st">候选</span></td><td>采集到信号但证据不足</td><td>证据数 ≥1 且通过校验 → 生效</td><td>查看 / 忽略</td></tr>
+  <tr><td><span class="st">生效</span></td><td>校验通过写入</td><td>90 天无接触 → 衰减；用户纠错 → 已纠错</td><td>修改掌握度 / 查看证据 / 删除</td></tr>
+  <tr><td><span class="st">衰减</span></td><td>定时任务（每日）</td><td>新增接触 → 生效</td><td>同上</td></tr>
+  <tr><td><span class="st">已纠错</span></td><td>用户手动修改</td><td>30 天保护期结束 → 生效</td><td>再次修改 / 查看变更历史</td></tr>
+</table>
+
+<h3>9.3 关键判断分支</h3>
+<ul>
+  <li><strong>是否有画像证据？</strong>无 → 用默认档 L1 且不声称"根据你的情况"；有 → 按规则判档。</li>
+  <li><strong>前置依赖是否缺失？</strong>缺失 → 先补依赖再讲（1–2 句），不打断主问题。</li>
+  <li><strong>用户反馈是否与画像冲突？</strong>冲突 → 以用户反馈为准，画像立即修正。</li>
+  <li><strong>是否超出 token 预算？</strong>是 → 按 80%/100% 两档执行压缩与提示。</li>
+</ul>
+
+<!-- ==================== 10 ==================== -->
+<h2 id="s10">十、数据与埋点需求</h2>
+
+<h3>10.1 核心实体与关系</h3>
+<table>
+  <tr><th style="width:18%">实体</th><th>关键字段</th><th style="width:24%">关系</th></tr>
+  <tr><td>User</td><td>id, nickname, created_at, settings(json)</td><td>1 — N Conversation / Note / ProfileEntry</td></tr>
+  <tr><td>Conversation</td><td>id, user_id, title, created_at, updated_at, token_used</td><td>1 — N Message；1 — N Note</td></tr>
+  <tr><td>Message</td><td>id, conversation_id, role(user/assistant), content, revision, parent_message_id, status, edited_from, created_at</td><td>N — 1 Conversation；被 ProfileEntry 引用为证据</td></tr>
+  <tr><td>Concept（知识点）</td><td>id, name, aliases, domain, created_at</td><td>N — N Concept（依赖边）</td></tr>
+  <tr><td>ConceptEdge</td><td>from_concept_id, to_concept_id, relation(prerequisite/related)</td><td>依赖关系，用于 FR-03 前置检查</td></tr>
+  <tr><td>ProfileEntry（画像条目）</td><td>id, user_id, concept_id, mastery(0–1), status, last_touched_at, source_type(system/user), evidence_refs(json), updated_at</td><td>N — 1 Concept；证据指向 Message / Note</td></tr>
+  <tr><td>ProfileLog</td><td>id, profile_entry_id, old_value, new_value, signal_type, created_at</td><td>变更留痕，1 — N</td></tr>
+  <tr><td>Note</td><td>id, user_id, conversation_id(nullable), title, content(markdown), anchors(json), glossary(json), status, version</td><td>N — 1 Conversation；被 SelectionEvent 引用</td></tr>
+  <tr><td>SelectionEvent（划词）</td><td>id, user_id, note_id, selected_text, term_matched, action(explain/add_to_note/explain_deeper/rephrase), created_at</td><td>信号源，回流 ProfileEntry</td></tr>
+  <tr><td>AILog</td><td>id, user_id, scene(explain/note/selection), model_version, prompt_version, profile_snapshot_id, token_in, token_out, latency_ms, cost, status, created_at</td><td>成本与可追溯，保留 30 天</td></tr>
+</table>
+<p class="note">※ 实体设计已为后续 F3/F5/F4 预留（Source 素材实体、ProactiveTask 主动任务实体），本期不建表。</p>
+
+<h3>10.2 埋点事件</h3>
+<table>
+  <tr><th style="width:24%">事件名</th><th style="width:26%">触发时机</th><th>关键属性</th></tr>
+  <tr><td><code>conv_start</code></td><td>新建会话</td><td>source(new/continue), entry_page</td></tr>
+  <tr><td><code>msg_send</code></td><td>用户发送消息</td><td>conversation_id, msg_len, is_first_in_conv</td></tr>
+  <tr><td><code>explain_rendered</code></td><td>AI 讲解首 token 渲染</td><td>concept_id, depth_level, profile_hit(bool), latency_ms</td></tr>
+  <tr><td><code>depth_feedback</code></td><td>点击太啰嗦/再详细些/换种讲法</td><td>concept_id, from_level, to_level, old_mastery, new_mastery</td></tr>
+  <tr><td><code>msg_edit</code></td><td>编辑历史消息</td><td>conversation_id, msg_index, edit_distance_bucket</td></tr>
+  <tr><td><code>msg_regen</code></td><td>重新生成</td><td>conversation_id, msg_index, reason(edit/manual)</td></tr>
+  <tr><td><code>note_generate</code></td><td>生成笔记</td><td>conversation_id, msg_count, duration_ms, section_count, status</td></tr>
+  <tr><td><code>note_export</code></td><td>导出 Markdown</td><td>note_id, format, anchor_count</td></tr>
+  <tr><td><code>selection_open</code></td><td>划词浮层打开</td><td>note_id, text_len, latency_ms</td></tr>
+  <tr><td><code>selection_action</code></td><td>划词浮层内操作</td><td>action(explain/add/deeper/rephrase/copy), term_matched(bool)</td></tr>
+  <tr><td><code>profile_edit</code></td><td>用户手动改画像</td><td>concept_id, old_mastery, new_mastery, action(update/delete)</td></tr>
+  <tr><td><code>budget_warn</code></td><td>Token 预算达 80% / 100%</td><td>conversation_id, level, token_used</td></tr>
+</table>
+
+<h3>10.3 指标口径补充</h3>
+<p>第二节指标全部由上述埋点聚合：画像覆盖率 = <code>explain_rendered</code> 中 profile_hit=true 的 concept 去重数 ÷ 出现的 concept 去重数；讲解采纳率 = 1 − <code>depth_feedback</code> 次数 ÷ <code>explain_rendered</code> 次数；划词入库率 = <code>selection_action</code>(action=add) ÷ <code>selection_open</code>。</p>
+
+<!-- ==================== 11 ==================== -->
+<h2 id="s11">十一、权限与安全要求</h2>
+<table>
+  <tr><th style="width:20%">项</th><th>要求</th></tr>
+  <tr><td>账号模式</td><td>本期单账号（个人项目）。<strong>数据结构必须含 user_id</strong>，所有查询强制带 user_id 条件，为后续开放注册预留隔离能力；禁止依赖"只有一个人用"这一假设写死逻辑</td></tr>
+  <tr><td>密钥管理</td><td>模型 API Key 仅存服务端环境变量，<strong>禁止出现在前端代码、日志、错误堆栈</strong>；前端所有模型调用走后端代理</td></tr>
+  <tr><td>数据访问</td><td>用户数据（会话/笔记/画像）仅本人可读；无管理员后台读取功能（个人项目初版不做，后续如需再加）</td></tr>
+  <tr><td>用户权利</td><td>必须提供一键导出全部数据（JSON + Markdown）与彻底删除（含 AILog 中的会话内容）；删除后 30 天内不清除备份的需明确告知</td></tr>
+  <tr><td>日志脱敏</td><td>AILog 只存元信息（token 数、时延、版本），不存消息正文；错误日志中如含用户内容必须截断并脱敏</td></tr>
+  <tr><td>内容安全</td><td>讲解内容禁止输出违法、涉政敏感、色情暴力内容；涉及医疗/法律/投资等专业领域时必须声明"仅供学习理解，不构成专业建议"</td></tr>
+  <tr><td>第三方内容</td><td>用户上传的 PDF/视频（V0.6 起）仅限个人学习使用，界面需提示"请确认你拥有该内容的合法使用权"；不提供下载、二次分发能力</td></tr>
+  <tr><td>未成年人</td><td>若后续开放注册面向未成年人，需补充监护人同意流程与使用时长提示；本期单用户自用不涉及</td></tr>
+</table>
+
+<!-- ==================== 12 ==================== -->
+<h2 id="s12">十二、异常处理清单</h2>
+<table>
+  <tr><th style="width:6%">编号</th><th style="width:22%">异常场景</th><th style="width:24%">系统行为</th><th>用户可见反馈</th><th style="width:16%">恢复方式</th></tr>
+  <tr><td>E-01</td><td>模型超时（&gt;30s 无首 token）</td><td>自动重试 1 次 → 切换备用模型</td><td>"响应较慢，已切换备用模型"</td><td>自动恢复，可手动中止</td></tr>
+  <tr><td>E-02</td><td>模型限流 429 / 额度耗尽</td><td>指数退避重试 → 失败则进入降级</td><td>"当前调用额度受限，稍后重试 / 切换模型"</td><td>按提示重试或设置新 Key</td></tr>
+  <tr><td>E-03</td><td>流式输出中途断开</td><td>保留已生成内容，标记"未完成"</td><td>内容 + "生成中断"条 + 重试按钮</td><td>重试续写或重新生成</td></tr>
+  <tr><td>E-04</td><td>模型返回格式不合规（笔记结构缺失）</td><td>结构校验 → 缺失章节自动补生成 1 次</td><td>若无改善则标注"部分章节生成失败"</td><td>单章节重新生成</td></tr>
+  <tr><td>E-05</td><td>上下文超长（单会话过长）</td><td>按 80% 预算压缩注入，超 100% 阻断新调用</td><td>"本次会话较长，建议开启新会话"</td><td>新建会话，旧会话可读可解密</td></tr>
+  <tr><td>E-06</td><td>画像条目冲突（用户改后系统又推断）</td><td>用户手动值优先，30 天保护期内拒绝覆盖</td><td>画像页显示"由你设定"标记</td><td>保护期结束自动恢复推断</td></tr>
+  <tr><td>E-07</td><td>划词无匹配结果</td><td>不生成解释</td><td>"未找到该术语的相关解释，可试试完整句子"</td><td>用户改选更长文本或转对话提问</td></tr>
+  <tr><td>E-08</td><td>划词选中超长文本（&gt;200 字）</td><td>不解释，改提示总结</td><td>"是否总结这段内容？"</td><td>点击总结 → 进入对话</td></tr>
+  <tr><td>E-09</td><td>笔记导出失败（写文件/权限）</td><td>保留内容，提示重试</td><td>"导出失败，内容已保存，可重试"</td><td>重试 / 复制到剪贴板兜底</td></tr>
+  <tr><td>E-10</td><td>数据写入失败（存储满/服务异常）</td><td>阻止操作完成，明确报错</td><td>"保存失败，内容未丢失，请重试"（本地暂存）</td><td>重试；持续失败提示导出备份</td></tr>
+  <tr><td>E-11</td><td>多标签页同时编辑同一笔记</td><td>以最后保存为准并保留另一版为历史版本</td><td>"检测到另一窗口的修改，已保留两个版本"</td><td>选择保留版本</td></tr>
+  <tr><td>E-12</td><td>用户删除会话时有关联笔记</td><td>笔记保留，标记"来源已删除"</td><td>笔记页显示来源缺失标记</td><td>可手动删除笔记</td></tr>
+  <tr><td>E-13</td><td>服务端未配置模型 Key</td><td>启动自检阻断，页面顶部常驻提示</td><td>"未配置模型服务，请先完成设置"</td><td>设置页填入 Key 后恢复</td></tr>
+</table>
+<p class="note">※ 降级原则：<strong>降级不等于统一"系统繁忙"</strong>——每个降级点必须告诉用户"发生了什么、还能做什么"。</p>
+
+<!-- ==================== 13 ==================== -->
+<h2 id="s13">十三、上线计划、依赖与上线后验证</h2>
+
+<h3>13.1 依赖就绪度评估（三档分级）</h3>
+<table>
+  <tr><th style="width:20%">依赖项</th><th style="width:18%">所属</th><th style="width:12%">分级</th><th>说明 / 最晚就绪 / 替代方案</th></tr>
+  <tr><td>大模型 API（讲解 + 笔记生成）</td><td>第三方服务</td><td><span class="tag must">阻塞</span></td><td>核心能力，无模型即无产品。最晚于 B1 批次开始前确认可用；<strong>必须支持多供应商切换</strong>（同一抽象接口），单一供应商涨价/限流可直接替换</td></tr>
+  <tr><td>流式输出能力（SSE）</td><td>技术方案</td><td><span class="tag must">阻塞</span></td><td>不做流式则首字时延目标（≤3s）无法达成，体验不可接受；无替代</td></tr>
+  <tr><td>结构化输出稳定性（JSON 严格模式）</td><td>技术方案</td><td><span class="tag should">并行</span></td><td>画像抽取与笔记生成依赖结构化输出；若模型不稳定，改为"自由文本 + 后置解析 + 校验重试"（成本略升）</td></tr>
+  <tr><td>向量检索 / Embedding</td><td>技术方案</td><td><span class="tag could">可绕过</span></td><td>本期用关键词命中替代（方案 C 的初版形态），不上向量库；召回不够时 V0.6 再引入</td></tr>
+  <tr><td>PDF 解析 / 视频转写</td><td>第三方</td><td><span class="tag could">可绕过</span></td><td>V0.6 才启动；本期不依赖，可延后不影响 MVP</td></tr>
+  <tr><td>图形渲染（SVG 生成）</td><td>技术方案</td><td><span class="tag could">可绕过</span></td><td>V0.6 启动；本期无图形需求</td></tr>
+</table>
+
+<h3>13.2 迭代批次（个人项目按批次交付，不承诺日历日期）</h3>
+<table>
+  <tr><th style="width:8%">批次</th><th style="width:26%">交付内容</th><th style="width:30%">出口标准（可验证）</th><th>依赖前置</th></tr>
+  <tr><td><strong>B1</strong></td><td>工程骨架 + 会话/消息存储 + 流式对话（无画像）</td><td>能完整对话并持久化；刷新后消息不丢；首字 ≤3s</td><td>模型 API、SSE</td></tr>
+  <tr><td><strong>B2</strong></td><td>画像采集与存储 + 自适应讲解 + 画像页纠错</td><td>同一问题在两种画像状态下讲解深度不同（可用 AC-03-1 验证）；画像变更留痕可查</td><td>B1 完成</td></tr>
+  <tr><td><strong>B3</strong></td><td>消息编辑/重生成 + 笔记生成 + Markdown 导出</td><td>AC-02-1、AC-05-1、AC-05-2 全部通过</td><td>B2 完成</td></tr>
+  <tr><td><strong>B4</strong></td><td>笔记阅读视图 + 划词解答 + 加入笔记</td><td>AC-06-1、AC-07-1、AC-07-2 通过；划词不干扰复制</td><td>B3 完成</td></tr>
+  <tr><td><strong>B5</strong></td><td>成本控制 + 异常兜底 + 空态/加载态打磨</td><td>第十二节异常清单全部有对应处理；单会话成本达标</td><td>B4 完成</td></tr>
+</table>
+<p class="note">※ 各批次工时为个人开发，受可支配时间影响大，<strong>本 PRD 不承诺具体日期</strong>，只承诺批次顺序与出口标准。</p>
+
+<h3>13.3 上线后验证（自用 dogfooding 阶段）</h3>
+<ul class="check">
+  <li>连续自用 14 天，记录每日闭环完成次数与中断原因</li>
+  <li>第 7 天与第 14 天各做一次「同一概念两次讲解对比」——检查是否真的"越用越懂我"</li>
+  <li>第 14 天复盘：画像覆盖率、讲解采纳率、笔记产出率是否达 2.3 节目标；未达标则先修核心再谈新功能</li>
+  <li>决定是否进入 V0.6（F3 图形 / F5 PDF），依据 4.2 节触发条件</li>
+  <li>若邀请 3–5 位同学试用，需补充：多账号隔离验证、隐私说明告知、使用边界说明</li>
+</ul>
+<p><strong>最小数据能力（每版本必达）：</strong>本期至少提供一个「个人学习面板」，展示：本周闭环次数、画像条目总数与领域分布、笔记数、单会话平均成本。</p>
+
+<!-- ==================== 14 ==================== -->
+<h2 id="s14">十四、风险与遗留问题</h2>
+
+<h3>14.1 风险登记册</h3>
+<table>
+  <tr><th style="width:7%">编号</th><th style="width:26%">风险描述</th><th style="width:9%">类别</th><th style="width:6%">概率</th><th style="width:6%">影响</th><th style="width:8%">等级</th><th>应对措施</th></tr>
+  <tr><td>RK-01</td><td>画像被错误推断污染（把问过当学会、把看懂了当掌握），导致讲解持续跳步、用户彻底失去信任</td><td>数据</td><td>4</td><td>5</td><td class="risk-high">20 高</td><td>证据强制绑定（FR-04 ④）；用户手动值优先；单次更新幅度 ≤0.2；画像页默认可见可直接改</td></tr>
+  <tr><td>RK-02</td><td>成本失控：长会话 + 画像注入导致单会话成本远超预期，个人项目预算无法支撑</td><td>技术</td><td>3</td><td>4</td><td class="risk-mid">12 中</td><td>Token 预算硬上限（FR-09）；只注入 Top-K 画像与 ≤3 条证据；AILog 记录每次成本，日预算告警</td></tr>
+  <tr><td>RK-03</td><td>单人开发导致范围失控与烂尾（个人项目最大真实风险）</td><td>进度</td><td>4</td><td>4</td><td class="risk-high">16 高</td><td>批次化交付（B1–B5），每批可独立自用；Won't 清单硬性执行；每个新想法先进「后续版本池」不插队</td></tr>
+  <tr><td>RK-04</td><td>深度判定始终不准（模型对"L0/L1/L2"理解偏差），自适应体验做成噪音</td><td>技术</td><td>3</td><td>3</td><td class="risk-mid">9 中</td><td>深度档定义写进 prompt 并给正反例；用三按钮反馈持续校准；20 条样本集人工校验深度一致性</td></tr>
+  <tr><td>RK-05</td><td>笔记生成质量平庸（变成对话的机械摘要），用户没有导出动机</td><td>体验</td><td>3</td><td>4</td><td class="risk-mid">12 中</td><td>固定六段结构 + 强制溯源锚点；生成后允许单章节重写；以"笔记产出率 ≥30%"作为硬指标不达标就重构提示</td></tr>
+  <tr><td>RK-06</td><td>划词体验破坏阅读（浮层遮挡、误触发、抢走复制）</td><td>体验</td><td>3</td><td>2</td><td class="risk-low">6 低</td><td>仅阅读视图启用；提供复制出口；浮层 200ms 防抖；快捷键可临时关闭</td></tr>
+  <tr><td>RK-07</td><td>通用学科内容准确性风险（讲解出现知识性错误）</td><td>合规</td><td>3</td><td>4</td><td class="risk-mid">12 中</td><td>讲解中标注"如有疑问以教材/权威资料为准"；关键结论要求给出推理过程而非断言；专业领域加免责声明</td></tr>
+  <tr><td>RK-08</td><td>供应商 API 变更/涨价/不可用</td><td>技术</td><td>3</td><td>3</td><td class="risk-mid">9 中</td><td>模型抽象层（统一接口），至少两家供应商可切换；prompt 与模型解耦便于迁移</td></tr>
+</table>
+
+<h3>14.2 遗留问题（本期不解，登记跟踪）</h3>
+<table>
+  <tr><th style="width:7%">编号</th><th>遗留问题</th><th style="width:22%">处理计划</th></tr>
+  <tr><td>OP-01</td><td>知识点依赖图如何自动生长（通用学科无法人工建图）</td><td>V0.6 研究：从讲解中抽取"前置提及"自动建边，人工只做校验；本期先用单层知识点不建图</td></tr>
+  <tr><td>OP-02</td><td>视频链接解析的平台政策与版权边界</td><td>V1.0 前需确认可用平台与条款；优先做本地上传而非链接抓取</td></tr>
+  <tr><td>OP-03</td><td>多端同步的冲突策略</td><td>本期不做；若开放注册则须先定策略（最后写入优先 or OT），列为独立课题</td></tr>
+  <tr><td>OP-04</td><td>画像建模的心理学效度（掌握度是否真的对应"掌握"）</td><td>无学术依据，属工程近似；通过用户反馈持续校准，不对外宣称"科学测评"</td></tr>
+  <tr><td>OP-05</td><td>离线/弱网可用性</td><td>本期不设计；仅保证已加载内容可读</td></tr>
+</table>
+
+<!-- ==================== 15 ==================== -->
+<h2 id="s15">十五、附录</h2>
+
+<h3>15.1 页面清单与信息架构</h3>
+<table>
+  <tr><th style="width:16%">页面</th><th style="width:30%">核心内容</th><th style="width:26%">主要操作</th><th>在任务流中的位置</th></tr>
+  <tr><td>会话列表</td><td>最近会话、继续学习卡片、新建入口</td><td>新建 / 打开 / 重命名 / 删除</td><td>入口</td></tr>
+  <tr><td>对话页（核心）</td><td>消息流、深度反馈条、存为笔记入口</td><td>发送 / 编辑 / 重生成 / 反馈 / 存笔记</td><td>主工作台</td></tr>
+  <tr><td>笔记页</td><td>讲义正文、术语表、溯源锚点</td><td>编辑 / 划词 / 导出 / 删除</td><td>沉淀与复习</td></tr>
+  <tr><td>画像页</td><td>知识点列表（按领域）、掌握度、证据</td><td>查看 / 上调下调 / 删除 / 查看变更</td><td>透明度与校准</td></tr>
+  <tr><td>设置页</td><td>模型配置、成本上限、数据导出/删除</td><td>配置 / 导出 / 删除</td><td>运维</td></tr>
+</table>
+<p class="note">导航层级：顶部一级导航（对话 / 笔记 / 画像 / 设置）≤2 次点击可达任意核心功能，不做三级菜单。</p>
+
+<h3>15.2 核心页面线框思路</h3>
+<div class="card">
+  <h4>页面名称：对话页</h4>
+  <p><strong>目标：</strong>让用户一次就拿到"贴合我水平"的讲解，并顺手沉淀。</p>
+  <p><strong>布局：</strong></p>
+  <ul>
+    <li>左侧（可收起）：会话列表</li>
+    <li>主区上方：会话标题 + 画像状态提示（"依据 12 条已掌握知识点" 可点开查看）</li>
+    <li>主区：消息流。AI 消息底部固定三条反馈（再详细些 / 太啰嗦 / 换种讲法）+「为什么这么讲」折叠入口</li>
+    <li>主区底部：输入框（吸底）+「存为笔记」快捷按钮</li>
+  </ul>
+  <p><strong>交互说明：</strong></p>
+  <ul>
+    <li>用户消息 hover 出现「编辑」，点击进入行内编辑，保存后弹出"是否让 AI 重新回答？"</li>
+    <li>流式中显示光标与停止按钮；中断显示重试条</li>
+    <li>画像为空时顶部不显示画像提示条（避免"假装懂你"）</li>
+    <li>超长会话达预算 80% 时输入框上方出现轻提示，不阻断</li>
+  </ul>
+</div>
+<div class="card">
+  <h4>页面名称：笔记页（阅读视图）</h4>
+  <p><strong>目标：</strong>让用户能顺畅复习，遇到遗忘点当场补，补完就沉淀。</p>
+  <p><strong>布局：</strong>顶部（笔记标题 + 导出 + 编辑）｜正文区（六段结构，核心概念右侧有锚点小图标）｜末尾术语表｜右下角"回到对话原文"浮动入口。</p>
+  <p><strong>交互说明：</strong></p>
+  <ul>
+    <li>划词 → 浮层（解释 + 加入笔记 / 深入讲解 / 换种说法 + 复制）</li>
+    <li>点锚点图标 → 侧滑显示对话原文片段，不整页跳走</li>
+    <li>术语表条目可删除，删除后原文中的标记同步消失</li>
+    <li>空状态：无笔记时展示"从对话生成第一篇笔记"引导</li>
+  </ul>
+</div>
+<div class="card">
+  <h4>页面名称：画像页</h4>
+  <p><strong>目标：</strong>让用户 30 秒内看懂"AI 认为我会什么"，并能改掉错的。</p>
+  <p><strong>布局：</strong>顶部概览（条目总数 / 本领域分布 / 最近更新）｜列表（知识点 · 掌握度条 · 最近接触 · 证据数）｜右侧详情抽屉（证据列表 + 掌握度调整 + 删除 + 变更历史）。</p>
+  <p><strong>交互说明：</strong></p>
+  <ul>
+    <li>掌握度调整用 ±0.1 步进按钮 + 滑块，保存后立即生效</li>
+    <li>用户修改过的条目显示"由你设定"标签，并显示保护期剩余天数</li>
+    <li>证据点击跳转到对应消息并高亮</li>
+  </ul>
+</div>
+
+<h3>15.3 需求追踪矩阵（RTM）</h3>
+<table>
+  <tr><th style="width:9%">需求编号</th><th style="width:30%">需求描述</th><th style="width:12%">PRD 章节</th><th style="width:14%">用户故事</th><th style="width:14%">测试用例</th><th>状态</th></tr>
+  <tr><td>R-01</td><td>持续记忆并建模用户知识水平</td><td>FR-03 / FR-04 / FR-08</td><td>US-01 / US-05</td><td>TC-03, TC-04, TC-08</td><td>待开发</td></tr>
+  <tr><td>R-02</td><td>按画像自动调整讲解深度与表达</td><td>FR-03 / 7.8</td><td>US-01</td><td>TC-03</td><td>待开发</td></tr>
+  <tr><td>R-03</td><td>历史对话可追加、编辑、补充</td><td>FR-02</td><td>US-02</td><td>TC-02</td><td>待开发</td></tr>
+  <tr><td>R-04</td><td>对话整理为可导出的结构化笔记</td><td>FR-05</td><td>US-03</td><td>TC-05</td><td>待开发</td></tr>
+  <tr><td>R-05</td><td>图示/可视化增强讲解</td><td>4.2（V0.6）</td><td>—</td><td>—</td><td>排期外</td></tr>
+  <tr><td>R-06</td><td>主动发现并完成辅助任务 + 陪伴感</td><td>4.2（V1.0）</td><td>—</td><td>—</td><td>排期外</td></tr>
+  <tr><td>R-07</td><td>PDF/视频 → 结构化讲义</td><td>4.2（V0.6）</td><td>—</td><td>—</td><td>排期外</td></tr>
+  <tr><td>R-08</td><td>划词即时解答</td><td>FR-06</td><td>US-04</td><td>TC-06</td><td>待开发</td></tr>
+  <tr><td>R-09</td><td>划词结果加入笔记</td><td>FR-07</td><td>US-04</td><td>TC-07</td><td>待开发</td></tr>
+  <tr><td>R-10</td><td>成本可控与异常降级</td><td>FR-09 / 第十二节</td><td>—</td><td>TC-09</td><td>待开发</td></tr>
+</table>
+<p class="note">对应关系：R-01~R-09 为用户原始需求（六项）拆解后的编号，R-10 为个人项目约束衍生的必须项。R-05/R-06/R-07 本期明确排期外，附 4.2 节启动触发条件。</p>
+
+<h3>15.4 出稿自检</h3>
+<ul class="check">
+  <li>15 段结构齐全（文档信息 → 附录）</li>
+  <li>功能需求逐条编号（FR-01 ~ FR-09）+ Given/When/Then 验收</li>
+  <li>方案对比给出推荐结论（方案 C）+ 演进路径与触发条件</li>
+  <li>依赖评估按三档分级（阻塞 2 项 / 并行 1 项 / 可绕过 3 项）+ 替代方案</li>
+  <li>非功能需求含明确数值（时延/成本/兼容/可访问性）</li>
+  <li>异常处理清单 13 条，覆盖模型、存储、并发、导出</li>
+  <li>每个版本含最小数据能力（个人学习面板）</li>
+  <li>附录含 RTM 与合规声明</li>
+  <li>资金类专项：不适用（本产品本期无支付/交易场景，已确认无资金流）</li>
+</ul>
+
+<p class="compliance">本方案为产品设计参考，具体实施请结合相关法律法规与平台服务条款确认。文档中所有目标值、权重、成本估算均为待校准的估算值，示例数据均为虚构；涉及第三方模型服务与内容素材的功能，以对应服务条款及版权要求为准。涉及医疗、法律、投资等专业领域的内容输出不构成专业建议。</p>
+<footer class="pagenote">Personal AI 学习应用 · PRD V1.0 · 2026-10-22 · 由司南（产品专家）编写，全部内容原创</footer>
+</div>
+</body>
+</html>
