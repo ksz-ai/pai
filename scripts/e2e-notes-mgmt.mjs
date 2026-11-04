@@ -234,6 +234,23 @@ try {
   const socMsgs4 = db.prepare("SELECT meta, content FROM messages WHERE conversation_id = ? AND role='assistant' ORDER BY created_at DESC LIMIT 1").get(convSoc.id);
   check("复盘后新提问 → 重新开启引导", JSON.parse(socMsgs4.meta).socratic_state === "guiding");
 
+  // [12] 批次 M2：图谱 / 笔记问答 / 周报
+  console.log("\n[9] 批次 M2（图谱/笔记问答/周报）");
+  const graph = await json(await fetch(BASE + "/api/graph"));
+  check("图谱节点非空", graph.nodes.length >= 1);
+  check("图谱边为共现对（src<dst）", graph.links.every((l) => l.source < l.target && l.weight >= 1));
+  const noteIdM2 = testNoteIds[0];
+  const askRes = await fetch(BASE + "/api/notes/" + noteIdM2 + "/ask", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question: "这篇笔记讲了什么？" }) });
+  const askText = await askRes.text();
+  const SSE_SEP = "\n\n";
+  const askEvents = askText.split(SSE_SEP).filter((l) => l.startsWith("data:")).map((l) => JSON.parse(l.slice(5).trim()));
+  check("笔记问答流式有输出", askEvents.some((e) => e.type === "delta" && e.text) || askEvents.some((e) => e.type === "done"));
+  const qaSave = await json(await fetch(BASE + "/api/notes/" + noteIdM2, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ append_qa: { question: "这篇笔记讲了什么？", answer: "特征值描述缩放倍数（测试存入）" } }) }));
+  check("问答存入延伸问题", qaSave.note.content.includes("问：这篇笔记讲了什么？"));
+  const weekly = await json(await post("/api/reports/weekly", {}));
+  check("周报生成并保存为笔记", Boolean(weekly.note?.id) && weekly.note.domain === "学习周报");
+  testNoteIds.push(weekly.note.id);
+
 } finally {
   // ---- 恢复：删除测试数据、从备份文件恢复配置、读回验证 ----
   for (const id of testNoteIds) await fetch(`${BASE}/api/notes/${id}`, { method: "DELETE" }).catch(() => {});

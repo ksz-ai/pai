@@ -117,6 +117,19 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // 学习周报（M2-4）
+  if (system.includes("学习周报生成器")) {
+    console.log("[mock] weekly report");
+    let data = {};
+    try {
+      data = JSON.parse(system.match(/## 本周数据（JSON）\n([\s\S]*?)\n\n## 输出结构/)?.[1] ?? "{}");
+    } catch {}
+    const report = `# 学习周报\n\n## 本周概览\n本周开启了 ${data.conversations ?? 2} 段学习会话，围绕特征值与递归展开，产出 ${data.notesCreated ?? 1} 篇笔记。\n\n## 掌握度变化\n- 「特征值」掌握度有所上升\n\n## 薄弱点\n- 「应用程序编程接口」掌握度 0.30，建议再来一轮针对性讲解\n\n## 下周建议\n- 完成《特征值入门》的卡片复习\n- 用苏格拉底模式再学一个新概念`;
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ choices: [{ message: { content: report } }], usage: { prompt_tokens: 600, completion_tokens: 300 } }));
+    return;
+  }
+
   // 苏格拉底式（融合批次 F1+：开启轮 / 续轮）
   if (system.includes("苏格拉底式引导")) {
     const isOpening = system.includes("开启轮");

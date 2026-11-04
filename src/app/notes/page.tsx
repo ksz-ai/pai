@@ -35,6 +35,7 @@ export default function NotesPage() {
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [merging, setMerging] = useState(false);
+  const [reportBusy, setReportBusy] = useState(false);
   const [dragOverDomain, setDragOverDomain] = useState<string | null>(null);
   const [customDomains, setCustomDomains] = useState<string[]>([]);
   const [creatingLabel, setCreatingLabel] = useState(false);
@@ -128,16 +129,35 @@ export default function NotesPage() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
-      <div className="mb-6 flex items-start justify-between">
+      <div className="mb-6 flex items-start justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold text-white">我的笔记</h1>
           <p className="mt-0.5 text-sm text-text3">
             由对话整理的结构化讲义，可导出 Markdown 带走；打开笔记后，划选术语可即时解答
           </p>
         </div>
-        <Link href="/review" className="shrink-0 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-bg hover:opacity-90" title="用卡片自评复习，结果回流画像">
-          开始复习
-        </Link>
+        <div className="flex shrink-0 gap-2">
+          <button
+            onClick={async () => {
+              setReportBusy(true);
+              try {
+                const r = await jsonFetch<{ note: { id: string } }>("/api/reports/weekly", { method: "POST" });
+                router.push(`/notes/${r.note.id}`);
+              } catch (e) {
+                alert(e instanceof Error ? e.message : "周报生成失败");
+                setReportBusy(false);
+              }
+            }}
+            disabled={reportBusy}
+            className="rounded-lg border border-border px-4 py-2 text-sm text-text2 hover:border-accent hover:text-accent disabled:opacity-40"
+            title="聚合本周学习数据，AI 生成一页叙事周报（保存为笔记）"
+          >
+            {reportBusy ? "生成中…" : "学习周报"}
+          </button>
+          <Link href="/review" className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-bg hover:opacity-90" title="用卡片自评复习，结果回流画像">
+            开始复习
+          </Link>
+        </div>
       </div>
 
       {/* 视图切换 + 搜索 + 排序 + 多选合并 */}

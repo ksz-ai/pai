@@ -27,6 +27,25 @@ export function parseGlossary(content: string): GlossaryEntry[] {
   return entries;
 }
 
+/** 追加问答到「延伸问题」章节（M2-3 与笔记对话 → 存入笔记）；无章节则文末新建 */
+export function appendQaToNote(content: string, question: string, answer: string): string {
+  const lines = content.split("\n");
+  const qaBlock = ["", `- **问：${question}**`, `  答：${answer.replace(/\n/g, "\n  ")}`];
+  const headingIdx = lines.findIndex((l) => l.trim() === "## 延伸问题");
+  if (headingIdx === -1) {
+    return [...lines, "", "## 延伸问题（来自笔记问答）", ...qaBlock.slice(1)].join("\n");
+  }
+  let insertAt = lines.length;
+  for (let i = headingIdx + 1; i < lines.length; i++) {
+    if (/^#{2,3}\s/.test(lines[i].trim())) {
+      insertAt = i;
+      break;
+    }
+  }
+  lines.splice(insertAt, 0, ...qaBlock);
+  return lines.join("\n");
+}
+
 /** 追加术语条目；已存在同名术语时不修改（FR-07 ③ 禁止重复条目），由调用方决定是否替换 */
 export function addGlossaryEntry(content: string, term: string, explanation: string): { content: string; exists: boolean; previous?: string } {
   const existing = parseGlossary(content).find((e) => e.term === term);

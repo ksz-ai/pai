@@ -9,6 +9,7 @@ import { parseGlossary } from "@/lib/notes/glossary";
 import { Markdown } from "@/components/common/Markdown";
 import { Spinner } from "@/components/common/EmptyState";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
+import { NoteAskPanel } from "@/components/notes/NoteAskPanel";
 
 /**
  * 笔记阅读视图（FR-05 + B4 划词解答）：
@@ -40,6 +41,7 @@ export function NoteReader({ noteId }: { noteId: string }) {
   const [domainEditing, setDomainEditing] = useState(false);
   const [domainInput, setDomainInput] = useState("");
   const [knownDomains, setKnownDomains] = useState<string[]>([]);
+  const [askOpen, setAskOpen] = useState(false);
 
   const contentRef = useRef<HTMLDivElement | null>(null);
   const pageRef = useRef<HTMLDivElement | null>(null);
@@ -418,6 +420,13 @@ export function NoteReader({ noteId }: { noteId: string }) {
                 <button onClick={exportNote} className="rounded-md bg-accent px-3 py-1.5 text-xs font-medium text-bg hover:opacity-90">
                   导出 Markdown
                 </button>
+                <button
+                  onClick={() => setAskOpen(true)}
+                  className="rounded-md border border-accent/50 px-3 py-1.5 text-xs font-medium text-accent hover:bg-accent/10"
+                  title="基于本篇笔记的问答面板"
+                >
+                  问一问
+                </button>
                 <Link
                   href={`/review?note=${note.id}`}
                   className="rounded-md border border-border px-3 py-1.5 text-xs text-text2 hover:border-accent hover:text-accent"
@@ -723,6 +732,18 @@ export function NoteReader({ noteId }: { noteId: string }) {
           选「保留我的版本」将以你正在编辑的内容覆盖（对方版本存入历史）；取消则重新加载最新版本。
         </p>
       </ConfirmDialog>
+
+      {/* 与笔记对话面板（M2-3） */}
+      {askOpen && note && (
+        <NoteAskPanel
+          noteId={note.id}
+          noteTitle={note.title}
+          onClose={() => setAskOpen(false)}
+          onSaved={() => {
+            load();
+          }}
+        />
+      )}
 
       {/* 锚点侧滑（锚点 v2：各锚点可指向不同会话） */}
       {anchor !== null && (

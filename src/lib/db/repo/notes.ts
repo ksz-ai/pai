@@ -90,10 +90,12 @@ export function createNote(opts: {
   title: string;
   content: string;
   anchors: NoteAnchor[];
+  /** 显式领域（如学习周报），缺省按内容自动归类 */
+  domain?: string;
 }): NoteDTO {
   const id = uuid();
   const ts = nowIso();
-  const domain = classifyDomain(opts.content);
+  const domain = opts.domain ?? classifyDomain(opts.content);
   getDb()
     .prepare(
       `INSERT INTO notes (id, user_id, conversation_id, source_conversation_id, source_title, title, content, anchors, status, version, domain, created_at, updated_at)

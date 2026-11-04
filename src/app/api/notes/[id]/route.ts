@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb, getDefaultUserId } from "@/lib/db";
 import { getNote, markExported, updateNoteContent, deleteNote, setNoteDomain } from "@/lib/db/repo/notes";
-import { addGlossaryEntry, upsertGlossaryEntry } from "@/lib/notes/glossary";
+import { addGlossaryEntry, upsertGlossaryEntry, appendQaToNote } from "@/lib/notes/glossary";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -25,6 +25,7 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
     content?: string;
     mark_exported?: boolean;
     glossary_add?: { term: string; explanation: string; replace?: boolean };
+    append_qa?: { question: string; answer: string };
     base_version?: number;
     force?: boolean;
     domain?: string;
@@ -32,6 +33,16 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
 
   const note = getNote(id, userId);
   if (!note) return NextResponse.json({ error: "笔记不存在" }, { status: 404 });
+
+  // 与笔记对话 → 存入笔记（M2-3）：问答追加到延伸问题章节
+  if (body.append_qa) {
+    const { question, answer } = body.append_qa;
+    if (!question?.trim() || !answer?.trim()) {
+      return NextResponse.json({ error: "问答内容不能为空" }, { status: 400 });
+    }
+    updateNoteContent(id, userId, appendQaToNote(note.content, question.trim(), answer.trim()));
+    return NextResponse.json({ ok: true, note: getNote(id, userId) });
+  }
 
   // 用户自定义分类（分类体系优化）：设置领域并锁定
   if (body.domain !== undefined) {
