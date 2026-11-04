@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>复习队列 · PAI 个人 AI 学习</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="assistant.css" />
+  <style>
+    .review-hero__title { font-size: 22px; margin: 12px 0 8px; }
+    .review-hero__text { color: var(--text-sub); font-size: 14px; max-width: 46ch; }
+    .review-hero__ring { display: grid; place-items: center; }
+    .review-ring__track { stroke: var(--surface-alt); }
+    .review-ring__fill { stroke: var(--primary); }
+    .review-hero__stats { grid-column: 1 / -1; }
+    .review-hero__stats .stat-card { background: var(--surface-alt); border: 1px solid var(--border); border-radius: var(--r-md); }
+    .review-progress.bar--low > i, .review-progress.bar--mid > i { background: var(--primary); }
+    .review-note-link { color: var(--primary); }
+    .review-note-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+    .review-rules { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .review-rule { padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--surface-alt); }
+    .review-rule p { margin-top: 6px; font-size: 13px; color: var(--text-sub); }
+    .review-modal { width: min(660px, 100%); }
+    .review-stage [hidden] { display: none !important; }
+    .review-answer-head { font-size: 14px; line-height: 1.8; }
+    .review-answer-list { margin-top: 10px; }
+    .review-answer-list li { position: relative; padding-left: 16px; margin-top: 6px; font-size: 13.5px; line-height: 1.8; color: var(--text); }
+    .review-answer-list li::before { content: ""; position: absolute; left: 2px; top: .72em; width: 5px; height: 5px; border-radius: 50%; background: var(--primary); opacity: .6; }
+    .review-answer-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 14px; padding-top: 10px; border-top: 1px dashed var(--border); font-size: 12px; color: var(--text-sub); }
+    .review-answer-foot a { color: var(--primary); display: inline-flex; align-items: center; gap: 4px; }
+    .review-reveal-wrap { margin-top: 22px; }
+    .review-done { padding: 34px 22px 10px; text-align: center; }
+    .review-done h3 { font-size: 22px; margin-top: 12px; }
+    .review-done p { color: var(--text-sub); font-size: 13.5px; margin-top: 8px; }
+    .review-done__actions { display: flex; justify-content: center; gap: 10px; margin-top: 22px; }
+    .review-foot { margin-top: 28px; text-align: center; color: var(--text-sub); font-size: 12px; }
+    @media (max-width: 560px) {
+      .review-rules { grid-template-columns: 1fr; }
+      .review-done__actions { flex-direction: column-reverse; }
+    }
+  </style>
+</head>
+<body data-page="review">
+  <aside class="app-nav" aria-label="主导航">
+    <a class="brand" href="index.html">
+      <span class="brand-mark" aria-hidden="true">PAI</span>
+      <span class="brand-copy"><strong>个人 AI 学习</strong><small>Personal AI Learning</small></span>
+    </a>
+    <nav class="nav-list">
+      <a class="nav-item" data-nav="home" href="index.html"><span data-icon="home"></span><span>学习概览</span></a>
+      <a class="nav-item" data-nav="chat" href="chat.html"><span data-icon="message-square"></span><span>对话讲解</span></a>
+      <a class="nav-item" data-nav="notes" href="notes.html"><span data-icon="book-open"></span><span>笔记库</span><span class="nav-badge">12</span></a>
+      <a class="nav-item" data-nav="profile" href="profile.html"><span data-icon="fingerprint"></span><span>学习画像</span></a>
+      <a class="nav-item" data-nav="review" href="review.html"><span data-icon="rotate-ccw"></span><span>复习队列</span><span class="nav-badge">4</span></a>
+      <a class="nav-item" data-nav="settings" href="settings.html"><span data-icon="sliders"></span><span>设置</span></a>
+    </nav>
+    <div class="nav-foot">
+      <div class="streak-line"><span data-icon="flame"></span><span>连续学习 12 天</span></div>
+      <div class="user-chip"><span class="avatar">林</span><div><strong>林致远</strong><small>软件工程 2024</small></div></div>
+    </div>
+  </aside>
+
+  <main class="app-content">
+    <div class="page">
+      <header class="page-head reveal">
+        <div class="page-head__main">
+          <span class="eyebrow">REVIEW · 今日 4 个到期</span>
+          <h1>复习队列</h1>
+          <p class="lede">按间隔重复排期，先在心里回答再揭示答案。每次自评都会同步回流学习画像。</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn--primary" id="start-review"><span data-icon="play"></span>开始复习</button>
+        </div>
+      </header>
+
+      <section class="card review-hero reveal" style="--d:1" aria-labelledby="hero-headline">
+        <div>
+          <span class="tag tag--accent">今日复习</span>
+          <h2 class="review-hero__title" id="hero-headline">4 个概念今天到期，预计 8 分钟</h2>
+          <p class="review-hero__text">从最弱的概念开始，评分后按间隔重复自动排期；不熟的条目明天会优先出现。</p>
+          <div class="progress-line" style="margin-top: 16px">
+            <span>本周计划</span>
+            <div class="bar review-progress"><i id="hero-progress" style="--pct:40%"></i></div>
+            <span id="hero-progress-label">4 / 10</span>
+          </div>
+        </div>
+        <div class="review-hero__ring">
+          <div class="ring" aria-hidden="true">
+            <svg viewBox="0 0 116 116">
+              <circle class="review-ring__track" cx="58" cy="58" r="48" fill="none" stroke-width="7"></circle>
+              <circle class="review-ring__fill" id="ring-fill" cx="58" cy="58" r="48" fill="none" stroke-width="7" stroke-linecap="round" stroke-dasharray="120.6 181" transform="rotate(-90 58 58)"></circle>
+            </svg>
+            <div class="ring__label"><strong id="ring-center">4/10</strong><small>今日</small></div>
+          </div>
+        </div>
+        <div class="grid-3 review-hero__stats" aria-label="复习计划">
+          <div class="stat-card">
+            <span class="label"><span data-icon="clock"></span>今日到期</span>
+            <strong id="stat-today">4</strong>
+            <small>完成后当日清零</small>
+          </div>
+          <div class="stat-card">
+            <span class="label"><span data-icon="calendar"></span>明天到期</span>
+            <strong id="stat-tomorrow">3</strong>
+            <small>按当前间隔推算</small>
+          </div>
+          <div class="stat-card">
+            <span class="label"><span data-icon="bar-chart"></span>本周计划</span>
+            <strong id="stat-week">10</strong>
+            <small>含今天、明天与后续排期</small>
+          </div>
+        </div>
+      </section>
+
+      <div class="section-head reveal" style="--d:3">
+        <h2>全部排期</h2>
+        <span class="hint" id="queue-hint">按到期时间排序 · 共 10 个</span>
+      </div>
+      <section class="review-list reveal" style="--d:3" id="review-list" aria-live="polite">
+        <div class="review-item"><div class="skeleton" style="width: 56%; height: 18px"></div></div>
+        <div class="review-item"><div class="skeleton" style="width: 46%; height: 18px"></div></div>
+        <div class="review-item"><div class="skeleton" style="width: 62%; height: 18px"></div></div>
+      </section>
+
+      <section class="card card-pad reveal" style="--d:4; margin-top: 20px" aria-labelledby="rules-title">
+        <div class="section-head" style="margin: 0 0 12px">
+          <h2 id="rules-title" style="font-size: 18px">间隔重复规则</h2>
+          <span class="hint">自评会回流画像</span>
+        </div>
+        <div class="review-rules">
+          <div class="review-rule">
+            <span class="tag tag--primary">认识了</span>
+            <p>间隔 ×1.5：当前 4 天，下一次大约 6 天后。</p>
+          </div>
+          <div class="review-rule">
+            <span class="tag tag--danger">还不熟</span>
+            <p>间隔回到 2 天，明天优先出现在队列里。</p>
+          </div>
+        </div>
+        <p class="field-note" style="margin-top: 12px">每次自评都会写入学习画像：认识记一次应用证据，不熟记一次负向信号；手动纠错后的 30 天保护期内不会下调。</p>
+      </section>
+
+      <p class="review-foot">原型演示 · 排期与评分均为本地 Mock</p>
+    </div>
+  </main>
+
+  <div class="modal-backdrop" id="review-modal" hidden>
+    <div class="modal review-modal">
+      <div class="modal__head">
+        <div>
+          <h3>复习</h3>
+          <p>先自评，再揭示答案 · 评分会回流画像</p>
+        </div>
+        <button class="icon-btn" data-modal-close aria-label="关闭复习"><span data-icon="x"></span></button>
+      </div>
+      <div class="modal__body">
+        <div class="progress-line">
+          <span id="rv-step">第 1 / 4</span>
+          <div class="bar review-progress"><i id="rv-progress" style="--pct:25%"></i></div>
+        </div>
+        <div id="rv-host"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="icons.js"></script>
+  <script src="mock.js"></script>
+  <script src="api.js"></script>
+  <script src="app.js"></script>
+  <script src="assistant.js"></script>
+  <script>
+    (function () {
+      var ui = window.ui;
+      var DB = window.DB;
+
+      var ANSWERS = {
+        "位置编码": {
+          head: "位置编码补齐自注意力缺失的「顺序」信息。",
+          points: [
+            "正弦编码在 token embedding 上做逐元素加法，提供绝对位置；",
+            "RoPE 在注意力里旋转 q / k，使点积只依赖相对位移 i − j；",
+            "把位置编码全设为 0，需要顺序的任务会立刻退化，这是最直接的自检。"
+          ],
+          noteId: "n1"
+        },
+        "RoPE": {
+          head: "RoPE 用旋转把相对位置写进 q·k 点积。",
+          points: [
+            "每一对维度看作二维平面上的点，按位置角度旋转；",
+            "旋转只改方向、不改模长，语义强度不被破坏；",
+            "点积只与 i − j 有关；长序列外推需要插值或频率缩放。"
+          ],
+          noteId: "n1"
+        },
+        "LayerNorm": {
+          head: "LayerNorm 在特征维上归一化，稳定每一层的尺度。",
+          points: [
+            "对单个样本的特征维求均值与方差，再做可学习的仿射变换；",
+            "Post-LN 放在残差之后，输出尺度随深度放大，需要 warmup 兜底；",
+            "Pre-LN 放在子层入口，梯度更平稳，但表达略有损失。"
+          ],
+          noteId: "n6"
+        },
+        "warmup": {
+          head: "warmup 给 Adam 的二阶矩估计一个收敛窗口。",
+          points: [
+            "学习率从很小的值线性升到目标值，再交给主调度衰减；",
+            "初期梯度方差大，二阶矩估计不稳，直接大步长容易发散；",
+            "它不是玄学，而是在补偿估计器初期的偏差。"
+          ],
+          noteId: "n8"
+        },
+        "多头注意力": {
+          head: "多个头在不同子空间做同样的加权求和，再拼接投影。",
+          points: [
+            "每个头有自己的 Wq / Wk / Wv，关注不同的关系模式；",
+            "头的分工可以被观察到，但「事后叙事」式的解释要谨慎；",
+            "输出 concat 后过一层线性投影，维度回到 d_model。"
+          ],
+          noteId: "n2"
+        },
+        "KL 散度": {
+          head: "KL = 交叉熵 − 真实分布的熵。",
+          points: [
+            "衡量两个分布的差异，非对称，也不满足三角不等式；",
+            "真实分布固定时，最小化交叉熵等价于最小化 KL；",
+            "训练里省略的常数项不影响梯度。"
+          ],
+          noteId: "n5"
+        },
+        "数值稳定性": {
+          head: "softmax 先减去最大值，避免 exp 溢出。",
+          points: [
+            "exp 增长极快，溢出发生在 exp 而不是最后的除法；",
+            "log-sum-exp 把连乘转到对数域加法，适合大数计算；",
+            "减最大值不改变 softmax 结果，只改变数值路径。"
+          ],
+          noteId: "n7"
+        },
+        "nn.Module": {
+          head: "__call__ 负责 hook 与注册，forward 只关心计算。",
+          points: [
+            "调用 module(x) 走 __call__，依次触发 forward pre hook 与 forward hook；",
+            "nn.Parameter 赋值即注册，子模块赋值也会进入 parameters()；",
+            "调试 hook 时，调用链的顺序比 forward 内部实现更关键。"
+          ],
+          noteId: "n3"
+        },
+        "patch embedding": {
+          head: "ViT 把图像切成 patch，卷积与 Linear 投影等价。",
+          points: [
+            "卷积核切块 + 展平，与不重叠切块后的 Linear 投影数学等价；",
+            "stride 决定是否重叠，两种实现的权重形状可以互相转换；",
+            "展平后加 cls token 与位置编码，再进入 Transformer。"
+          ],
+          noteId: "n4"
+        },
+        "矩阵求导": {
+          head: "用维度对齐法检查矩阵求导结果。",
+          points: [
+            "标量对矩阵的梯度，形状与矩阵本身一致；",
+            "链式法则先拆成小步骤，每一步都检查形状；",
+            "转置出现在哪里，取决于分子布局还是分母布局。"
+          ],
+          noteId: "n11"
+        }
+      };
+
+      var queue = [];
+      var session = [];
+      var idx = 0;
+      var busy = false;
+
+      function isToday(item) { return item.due === "今天"; }
+      function noteById(id) {
+        for (var i = 0; i < DB.notes.length; i++) if (DB.notes[i].id === id) return DB.notes[i];
+        return null;
+      }
+      function findQueue(id) {
+        for (var i = 0; i < queue.length; i++) if (queue[i].id === id) return queue[i];
+        return null;
+      }
+
+      function renderHero() {
+        var today = 0;
+        var tomorrow = 0;
+        queue.forEach(function (r) {
+          if (r.due === "今天") today += 1;
+          if (r.due === "明天") tomorrow += 1;
+        });
+        var total = queue.length;
+        var ratio = total ? today / total : 0;
+
+        document.getElementById("hero-headline").textContent = today + " 个概念今天到期，预计 " + (today * 2) + " 分钟";
+        document.getElementById("stat-today").textContent = String(today);
+        document.getElementById("stat-tomorrow").textContent = String(tomorrow);
+        document.getElementById("stat-week").textContent = String(total);
+        document.getElementById("queue-hint").textContent = "按到期时间排序 · 共 " + total + " 个";
+
+        document.getElementById("ring-center").textContent = today + "/" + total;
+        document.getElementById("hero-progress").style.setProperty("--pct", (ratio * 100).toFixed(1) + "%");
+        document.getElementById("hero-progress-label").textContent = today + " / " + total;
+
+        var circ = 2 * Math.PI * 48;
+        document.getElementById("ring-fill").setAttribute(
+          "stroke-dasharray",
+          (circ * ratio).toFixed(1) + " " + (circ * (1 - ratio)).toFixed(1)
+        );
+      }
+
+      function renderList() {
+        var host = document.getElementById("review-list");
+        if (!queue.length) {
+          host.innerHTML =
+            '<div class="empty">' +
+              '<span data-icon="check-circle"></span>' +
+              '<h3>队列已清空</h3>' +
+              '<p>今天没有到期概念，去笔记库生成新的卡片，明天会自动排期。</p>' +
+              '<a class="btn" href="notes.html">去生成笔记<span data-icon="arrow-right"></span></a>' +
+            '</div>';
+          window.renderIcons(host);
+          return;
+        }
+        host.innerHTML = queue.map(function (item) {
+          var note = noteById(item.noteId);
+          var badge = item.due === "今天" ? "now" : (item.due === "明天" ? "soon" : "later");
+          var grade = item.lastGrade === "known" ? "认识" : "不熟";
+          return (
+            '<div class="review-item">' +
+              '<div class="review-item__main">' +
+                '<strong>' + item.concept + '</strong>' +
+                '<small>来源笔记 <a class="review-note-link" href="note.html">' + (note ? note.title : "对应笔记") + '</a> · 间隔 ' + item.interval + ' 天 · 上次' + grade + '</small>' +
+              '</div>' +
+              '<span class="due-badge due-badge--' + badge + '">' + item.due + '</span>' +
+              '<button class="btn btn--sm" data-review-id="' + item.id + '">复习</button>' +
+            '</div>'
+          );
+        }).join("");
+        window.renderIcons(host);
+      }
+
+      function begin(startId) {
+        if (!queue.length) {
+          ui.toast("今天没有到期概念", "warn");
+          return;
+        }
+        var today = queue.filter(isToday);
+        var startItem = startId ? findQueue(startId) : null;
+        if (startItem && !isToday(startItem)) {
+          session = [startItem];
+        } else {
+          var pos = startItem ? today.indexOf(startItem) : 0;
+          if (pos < 0) pos = 0;
+          session = today.slice(pos);
+        }
+        if (!session.length) {
+          ui.toast("今天没有到期概念", "warn");
+          return;
+        }
+        idx = 0;
+        busy = false;
+        renderCard();
+        ui.openModal("review-modal");
+      }
+
+      function renderCard() {
+        var host = document.getElementById("rv-host");
+        var step = document.getElementById("rv-step");
+        var progress = document.getElementById("rv-progress");
+
+        if (idx >= session.length) {
+          showDone();
+          return;
+        }
+
+        var item = session[idx];
+        var ans = ANSWERS[item.concept] || {
+          head: "先复述定义，再给出一个使用场景。",
+          points: ["定义与关键性质", "一个具体应用场景", "一个常见误区"],
+          noteId: item.noteId
+        };
+        var note = noteById(ans.noteId) || noteById(item.noteId);
+        var noteTitle = note ? note.title : "对应笔记";
+
+        step.textContent = "第 " + (idx + 1) + " / " + session.length;
+        progress.style.setProperty("--pct", (((idx + 1) / session.length) * 100).toFixed(1) + "%");
+
+        host.innerHTML =
+          '<div class="review-stage">' +
+            '<div class="meta">概念 ' + (idx + 1) + ' / ' + item.due + '到期</div>' +
+            '<div class="concept">' + item.concept + '</div>' +
+            '<p class="prompt">先在心里回答，再揭示答案。可以对照笔记「' + noteTitle + '」里的卡片。</p>' +
+            '<div class="review-reveal-wrap"><button class="btn btn--primary" id="rv-reveal"><span data-icon="lightbulb"></span>揭示答案</button></div>' +
+            '<div class="reveal-answer" id="rv-answer" hidden>' +
+              '<p class="review-answer-head"><strong>' + ans.head + '</strong></p>' +
+              '<ul class="review-answer-list">' + ans.points.map(function (p) { return '<li>' + p + '</li>'; }).join("") + '</ul>' +
+              '<div class="review-answer-foot">' +
+                '<span>来源：' + noteTitle + '</span>' +
+                '<a href="note.html">打开笔记<span data-icon="chevron-right"></span></a>' +
+              '</div>' +
+            '</div>' +
+            '<div class="grade-row" id="rv-grades" hidden>' +
+              '<button class="btn btn--primary" data-grade="known"><span data-icon="check"></span>认识了</button>' +
+              '<button class="btn" data-grade="unknown"><span data-icon="rotate-ccw"></span>还不熟</button>' +
+            '</div>' +
+          '</div>';
+        window.renderIcons(host);
+
+        var modal = document.querySelector("#review-modal .modal");
+        if (modal) modal.scrollTop = 0;
+
+        var revealBtn = document.getElementById("rv-reveal");
+        var answer = document.getElementById("rv-answer");
+        var grades = document.getElementById("rv-grades");
+
+        revealBtn.addEventListener("click", function () {
+          revealBtn.parentElement.hidden = true;
+          answer.hidden = false;
+          grades.hidden = false;
+        });
+
+        grades.addEventListener("click", function (e) {
+          var btn = e.target.closest("[data-grade]");
+          if (btn) grade(btn.getAttribute("data-grade"));
+        });
+      }
+
+      function grade(type) {
+        if (busy) return;
+        busy = true;
+        var btns = ui.$$("#rv-grades button");
+        btns.forEach(function (b) { b.disabled = true; });
+        api.gradeCard({ reviewId: session[idx].id, grade: type }).then(function (res) {
+          ui.toast((type === "known" ? "认识了" : "还不熟") + " · 下次间隔 " + res.nextInterval + " 天，到期 " + res.nextDue);
+          idx += 1;
+          busy = false;
+          renderCard();
+        }).catch(function () {
+          busy = false;
+          btns.forEach(function (b) { b.disabled = false; });
+          ui.toast("评分失败，请重试", "warn");
+        });
+      }
+
+      function showDone() {
+        var todaySession = session.every(isToday);
+        document.getElementById("rv-step").textContent = session.length + " / " + session.length;
+        document.getElementById("rv-progress").style.setProperty("--pct", "100%");
+        var host = document.getElementById("rv-host");
+        host.innerHTML =
+          '<div class="review-done">' +
+            '<span class="tag tag--primary">本轮完成</span>' +
+            '<h3>' + (todaySession ? "今日 " : "") + session.length + ' 个概念已完成</h3>' +
+            '<p>评分已记录，下一次到期时间按间隔重复排入队列。</p>' +
+            '<div class="review-done__actions">' +
+              '<button class="btn btn--primary" data-modal-close><span data-icon="check"></span>关闭</button>' +
+              '<a class="btn" href="note.html"><span data-icon="book-open"></span>查看笔记</a>' +
+            '</div>' +
+          '</div>';
+        window.renderIcons(host);
+      }
+
+      document.getElementById("start-review").addEventListener("click", function () { begin(null); });
+
+      document.getElementById("review-list").addEventListener("click", function (e) {
+        var btn = e.target.closest("[data-review-id]");
+        if (btn) begin(btn.getAttribute("data-review-id"));
+      });
+
+      api.getReviewQueue().then(function (list) {
+        queue = list;
+        renderHero();
+        renderList();
+      });
+    })();
+  </script>
+</body>
+</html>

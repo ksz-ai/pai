@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>学习画像 · PAI 个人 AI 学习</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="assistant.css" />
+  <style>
+    .profile-domain-card { padding: 4px 20px 8px; }
+    .profile-name-tag { height: 18px; padding: 0 6px; margin-left: 4px; font-size: 10.5px; vertical-align: 1px; }
+    .profile-log-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .profile-evidence-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; font-size: 12px; color: var(--text-sub); }
+    .profile-evidence-meta a { color: var(--primary); }
+    .profile-spacer { flex: 1; }
+    .profile-adjust { display: flex; align-items: center; gap: 10px; }
+    .profile-adjust .range { flex: 1; min-width: 100px; }
+    .profile-num { width: 76px; flex: none; text-align: right; font-family: var(--font-mono); font-size: 12.5px; }
+    .profile-hint { display: flex; align-items: center; gap: 6px; margin-top: 14px; padding: 8px 12px; background: var(--accent-soft); border-radius: var(--r-md); color: var(--accent); font-size: 12px; }
+    .profile-hint .icon { width: 15px; height: 15px; }
+    .profile-source-row { display: flex; align-items: baseline; gap: 10px; padding: 9px 0; border-bottom: 1px dashed var(--border); font-size: 12.5px; color: var(--text-sub); }
+    .profile-source-row:last-child { border-bottom: 0; }
+    .profile-source-row .tag { flex: none; }
+    .profile-foot { margin-top: 28px; text-align: center; color: var(--text-sub); font-size: 12px; }
+  </style>
+</head>
+<body data-page="profile">
+  <aside class="app-nav" aria-label="主导航">
+    <a class="brand" href="index.html">
+      <span class="brand-mark" aria-hidden="true">PAI</span>
+      <span class="brand-copy"><strong>个人 AI 学习</strong><small>Personal AI Learning</small></span>
+    </a>
+    <nav class="nav-list">
+      <a class="nav-item" data-nav="home" href="index.html"><span data-icon="home"></span><span>学习概览</span></a>
+      <a class="nav-item" data-nav="chat" href="chat.html"><span data-icon="message-square"></span><span>对话讲解</span></a>
+      <a class="nav-item" data-nav="notes" href="notes.html"><span data-icon="book-open"></span><span>笔记库</span><span class="nav-badge">12</span></a>
+      <a class="nav-item" data-nav="profile" href="profile.html"><span data-icon="fingerprint"></span><span>学习画像</span></a>
+      <a class="nav-item" data-nav="review" href="review.html"><span data-icon="rotate-ccw"></span><span>复习队列</span><span class="nav-badge">4</span></a>
+      <a class="nav-item" data-nav="settings" href="settings.html"><span data-icon="sliders"></span><span>设置</span></a>
+    </nav>
+    <div class="nav-foot">
+      <div class="streak-line"><span data-icon="flame"></span><span>连续学习 12 天</span></div>
+      <div class="user-chip"><span class="avatar">林</span><div><strong>林致远</strong><small>软件工程 2024</small></div></div>
+    </div>
+  </aside>
+
+  <main class="app-content">
+    <div class="page">
+      <header class="page-head reveal">
+        <div class="page-head__main">
+          <span class="eyebrow">PROFILE · 19 个概念</span>
+          <h1>学习画像</h1>
+          <p class="lede">掌握度由提问、反馈与手动纠错三类信号累积而成。每次手动纠错会进入 30 天保护期，期间系统不再下调。</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn" id="export-profile"><span data-icon="download"></span>导出画像</button>
+          <button class="btn btn--primary" id="reassess"><span data-icon="refresh-cw"></span>重新评估</button>
+        </div>
+      </header>
+
+      <section class="grid-3 reveal" style="--d:1" aria-label="画像概览">
+        <div class="card stat-card">
+          <span class="label"><span data-icon="trending-up"></span>平均掌握度</span>
+          <strong id="profile-avg">0.45</strong>
+          <small>按 0–1 计，12 条已建档概念，全量 19 个</small>
+        </div>
+        <div class="card stat-card">
+          <span class="label"><span data-icon="target"></span>已掌握概念</span>
+          <strong>7 <span style="font-size: 13px; font-family: var(--font-body); color: var(--text-sub)">/ 19</span></strong>
+          <small>掌握度 ≥ 0.70 记为已掌握</small>
+        </div>
+        <div class="card stat-card">
+          <span class="label"><span data-icon="lock"></span>保护期条目</span>
+          <strong><span id="protect-count">1</span> <span class="tag tag--accent">30 天</span></strong>
+          <small>手动纠错后 30 天内不被动下调</small>
+        </div>
+      </section>
+
+      <div class="section-head reveal" style="--d:2">
+        <h2>分领域掌握度</h2>
+        <span class="hint">点开「证据」查看来源，手动纠错会进入保护期</span>
+      </div>
+      <div id="domain-list"></div>
+
+      <div class="section-head reveal" style="--d:7">
+        <h2>最近变更</h2>
+        <span class="hint">全部信号均留痕，可追溯</span>
+      </div>
+      <section class="card card-pad reveal" style="--d:7" aria-label="最近变更记录">
+        <div class="timeline" id="profile-timeline"></div>
+      </section>
+
+      <section class="card card-pad reveal" style="--d:8; margin-top: 20px" aria-labelledby="source-title">
+        <div class="section-head" style="margin: 0 0 6px">
+          <h2 id="source-title" style="font-size: 18px">数据来源与权重</h2>
+          <span class="hint">掌握度不是单一分数，而是信号累积</span>
+        </div>
+        <div class="profile-source-row">
+          <span class="tag">提问</span>
+          <span>首次提问建立条目，初始掌握度 <span class="mono">0.3</span>（满分 1.0）。</span>
+        </div>
+        <div class="profile-source-row">
+          <span class="tag">反馈</span>
+          <span>「有帮助」<span class="mono">+0.15</span>，「没懂」<span class="mono">−0.15</span>；单轮最多记一次负向信号。</span>
+        </div>
+        <div class="profile-source-row">
+          <span class="tag">手动纠错</span>
+          <span>优先级最高，直接覆盖系统估值，并锁 30 天保护期。</span>
+        </div>
+        <div class="profile-source-row">
+          <span class="tag">时间衰减</span>
+          <span>连续 <span class="mono">90</span> 天未复习记 <span class="mono">−0.1</span>；保护期内不衰减。</span>
+        </div>
+      </section>
+
+      <p class="profile-foot">原型演示 · 画像数据为本地 Mock，不连接真实模型</p>
+    </div>
+  </main>
+
+  <div class="modal-backdrop" id="evidence-modal" hidden>
+    <div class="modal evidence-pop">
+      <div class="modal__head">
+        <div>
+          <h3 id="evidence-title">证据 · 自注意力</h3>
+          <p id="evidence-sub">Transformer · 更新于 今天 · 共 1 条</p>
+        </div>
+        <button class="icon-btn" data-modal-close aria-label="关闭证据"><span data-icon="x"></span></button>
+      </div>
+      <div class="modal__body">
+        <div id="evidence-list"></div>
+      </div>
+      <div class="modal__foot">
+        <button class="btn" data-modal-close>关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="correct-modal" hidden>
+    <div class="modal">
+      <div class="modal__head">
+        <div>
+          <h3>手动纠错 · <span id="correct-name">自注意力</span></h3>
+          <p>纠错优先级最高，保存后 30 天内系统不再下调</p>
+        </div>
+        <button class="icon-btn" data-modal-close aria-label="关闭纠错"><span data-icon="x"></span></button>
+      </div>
+      <div class="modal__body">
+        <div class="field">
+          <label for="correct-range">调整掌握度</label>
+          <div class="profile-adjust">
+            <input class="range" id="correct-range" type="range" min="0" max="100" step="1" value="62" />
+            <input class="input profile-num" id="correct-number" type="number" min="0" max="100" step="1" value="62" aria-label="掌握度百分比" />
+            <span style="font-size: 13px; color: var(--text-sub)">%</span>
+          </div>
+          <div class="field-note">当前值 <span class="mono" id="correct-current">62%</span> · 调整后 <span class="value-pill" id="correct-next">62%</span></div>
+        </div>
+        <div class="field" style="margin-top: 16px">
+          <label for="correct-note">备注（可选）</label>
+          <textarea class="textarea" id="correct-note" placeholder="例如：这次能完整推导 RoPE 的相对位置，比系统判断更熟"></textarea>
+        </div>
+        <div class="profile-hint"><span data-icon="lock"></span>手动调整后 30 天内系统不再下调</div>
+      </div>
+      <div class="modal__foot">
+        <button class="btn" data-modal-close>取消</button>
+        <button class="btn btn--primary" id="correct-save"><span data-icon="check"></span>保存纠错</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="icons.js"></script>
+  <script src="mock.js"></script>
+  <script src="api.js"></script>
+  <script src="app.js"></script>
+  <script src="assistant.js"></script>
+  <script>
+    (function () {
+      var ui = window.ui;
+      var DB = window.DB;
+
+      function pct(v) { return Math.round(v * 100); }
+      function semantic(p) { return p < 30 ? " bar--low" : (p < 70 ? " bar--mid" : ""); }
+      function findConcept(id) {
+        for (var i = 0; i < DB.concepts.length; i++) if (DB.concepts[i].id === id) return DB.concepts[i];
+        return null;
+      }
+      function findConv(id) {
+        for (var i = 0; i < DB.conversations.length; i++) if (DB.conversations[i].id === id) return DB.conversations[i];
+        return null;
+      }
+      function summary() {
+        var sum = 0;
+        var protect = 0;
+        DB.concepts.forEach(function (k) { sum += k.mastery; if (k.protected) protect += 1; });
+        return { avg: DB.concepts.length ? sum / DB.concepts.length : 0, protect: protect };
+      }
+
+      function renderStats() {
+        var s = summary();
+        document.getElementById("profile-avg").textContent = s.avg.toFixed(2);
+        document.getElementById("protect-count").textContent = String(s.protect);
+      }
+
+      function rowHtml(k) {
+        var p = pct(k.mastery);
+        var tag = k.protected ? '<span class="tag tag--accent profile-name-tag">保护中</span>' : "";
+        return (
+          '<div class="concept-row" data-concept-row="' + k.id + '">' +
+            '<span class="concept-name">' + k.name + '<small>更新于 ' + k.updatedAt + tag + '</small></span>' +
+            '<div class="concept-bar"><div class="bar' + semantic(p) + '"><i style="--pct:' + p + '%"></i></div></div>' +
+            '<span class="concept-value">' + p + '%</span>' +
+            '<div class="concept-actions">' +
+              '<button class="icon-btn" data-evidence="' + k.id + '" title="查看证据" aria-label="查看 ' + k.name + ' 的证据"><span data-icon="quote"></span></button>' +
+              '<button class="icon-btn" data-correct="' + k.id + '" title="手动纠错" aria-label="纠错 ' + k.name + ' 的掌握度"><span data-icon="edit"></span></button>' +
+            '</div>' +
+          '</div>'
+        );
+      }
+
+      function renderDomains() {
+        var host = document.getElementById("domain-list");
+        var html = "";
+        DB.domains.forEach(function (domain, di) {
+          var items = DB.concepts.filter(function (k) { return k.domain === domain; });
+          if (!items.length) return;
+          var sum = 0;
+          items.forEach(function (k) { sum += k.mastery; });
+          var avg = Math.round((sum / items.length) * 100);
+          html +=
+            '<section class="domain-block reveal" style="--d:' + (2 + di) + '">' +
+              '<div class="domain-block__head"><h2>' + domain + '</h2><span class="count">' + items.length + ' 个概念 · 平均 ' + avg + '%</span></div>' +
+              '<div class="card profile-domain-card">' + items.map(rowHtml).join("") + '</div>' +
+            '</section>';
+        });
+        host.innerHTML = html;
+        window.renderIcons(host);
+      }
+
+      function renderTimeline() {
+        var host = document.getElementById("profile-timeline");
+        host.innerHTML = DB.profileLogs.map(function (l) {
+          var up = l.to >= l.from;
+          return (
+            '<div class="timeline-item">' +
+              '<div class="profile-log-head"><strong>' + l.concept + ' · ' + l.signal + '</strong><span class="tag ' + (up ? "tag--primary" : "tag--danger") + '">' + pct(l.from) + '% → ' + pct(l.to) + '%</span></div>' +
+              '<small>' + l.at + '</small>' +
+              '<p>' + l.detail + '</p>' +
+            '</div>'
+          );
+        }).join("");
+      }
+
+      function fillEvidence(k) {
+        document.getElementById("evidence-title").textContent = "证据 · " + k.name;
+        document.getElementById("evidence-sub").textContent = k.domain + " · 更新于 " + k.updatedAt + " · 共 " + k.evidence.length + " 条";
+        var list = document.getElementById("evidence-list");
+        list.innerHTML = k.evidence.map(function (ev) {
+          var conv = findConv(ev.convId);
+          return (
+            '<div class="evidence-item">' +
+              '<blockquote class="quote">' + ev.quote + '</blockquote>' +
+              '<div class="profile-evidence-meta">' +
+                '<span class="tag">' + ev.at + '</span>' +
+                '<a href="chat.html">' + (conv ? conv.title : "来源会话") + '</a>' +
+                '<span class="profile-spacer"></span>' +
+                '<a class="btn btn--sm" href="chat.html">打开对话<span data-icon="arrow-up-right"></span></a>' +
+              '</div>' +
+            '</div>'
+          );
+        }).join("");
+        window.renderIcons(list);
+      }
+
+      /* 纠错弹窗 */
+      var correctId = null;
+      var rangeEl = document.getElementById("correct-range");
+      var numEl = document.getElementById("correct-number");
+
+      function refreshNext() {
+        var v = parseInt(rangeEl.value, 10);
+        if (isNaN(v)) v = 0;
+        document.getElementById("correct-next").textContent = v + "%";
+      }
+
+      function openCorrect(conceptId) {
+        var k = findConcept(conceptId);
+        if (!k) return;
+        correctId = conceptId;
+        var cur = pct(k.mastery);
+        document.getElementById("correct-name").textContent = k.name;
+        document.getElementById("correct-current").textContent = cur + "%";
+        rangeEl.value = String(cur);
+        numEl.value = String(cur);
+        document.getElementById("correct-note").value = "";
+        refreshNext();
+        ui.openModal("correct-modal");
+      }
+
+      rangeEl.addEventListener("input", function () {
+        numEl.value = rangeEl.value;
+        refreshNext();
+      });
+
+      numEl.addEventListener("input", function () {
+        var v = parseInt(numEl.value, 10);
+        if (isNaN(v)) return;
+        rangeEl.value = String(Math.max(0, Math.min(100, v)));
+        refreshNext();
+      });
+
+      numEl.addEventListener("change", function () {
+        var v = parseInt(numEl.value, 10);
+        if (isNaN(v)) v = 0;
+        v = Math.max(0, Math.min(100, v));
+        numEl.value = String(v);
+        rangeEl.value = String(v);
+        refreshNext();
+      });
+
+      document.getElementById("correct-save").addEventListener("click", function () {
+        var k = findConcept(correctId);
+        if (!k) return;
+        var btn = this;
+        var basePct = pct(k.mastery);
+        var target = Math.max(0, Math.min(100, parseInt(rangeEl.value, 10) || 0));
+        btn.disabled = true;
+        api.updateMastery({ conceptId: correctId, delta: (target - basePct) / 100 }).then(function (res) {
+          k.mastery = res.mastery;
+          k.protected = true;
+          k.updatedAt = "刚刚";
+          DB.profileLogs.unshift({
+            at: "刚刚",
+            concept: k.name,
+            from: basePct / 100,
+            to: res.mastery,
+            signal: "手动纠错",
+            detail: "手动将掌握度调整为 " + pct(res.mastery) + "%，30 天内不再被系统下调。"
+          });
+          renderDomains();
+          renderStats();
+          renderTimeline();
+          ui.closeModal(document.getElementById("correct-modal"));
+          ui.toast(k.name + " 掌握度已调整为 " + pct(res.mastery) + "%");
+          btn.disabled = false;
+        }).catch(function () {
+          ui.toast("纠错保存失败，请重试", "warn");
+          btn.disabled = false;
+        });
+      });
+
+      /* 行内按钮 */
+      document.addEventListener("click", function (e) {
+        var evBtn = e.target.closest("[data-evidence]");
+        if (evBtn) {
+          var k = findConcept(evBtn.getAttribute("data-evidence"));
+          if (k) {
+            fillEvidence(k);
+            ui.openModal("evidence-modal");
+          }
+          return;
+        }
+        var corBtn = e.target.closest("[data-correct]");
+        if (corBtn) openCorrect(corBtn.getAttribute("data-correct"));
+      });
+
+      /* 页头操作 */
+      document.getElementById("export-profile").addEventListener("click", function () {
+        var s = summary();
+        var data = {
+          exportedAt: "2026-10-30",
+          user: DB.user,
+          summary: {
+            averageMastery: Number(s.avg.toFixed(2)),
+            mastered: 7,
+            totalConcepts: 19,
+            protectedItems: s.protect
+          },
+          concepts: DB.concepts,
+          domains: DB.domains,
+          recentChanges: DB.profileLogs
+        };
+        ui.download("pai-profile-2026-10-30.json", JSON.stringify(data, null, 2));
+        ui.toast("画像已导出（JSON）");
+      });
+
+      document.getElementById("reassess").addEventListener("click", function () {
+        ui.toast("已加入评估队列");
+      });
+
+      renderStats();
+      renderDomains();
+      renderTimeline();
+      fillEvidence(DB.concepts[0]);
+    })();
+  </script>
+</body>
+</html>

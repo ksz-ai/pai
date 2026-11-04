@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>位置编码：从正弦到 RoPE · PAI 个人 AI 学习</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="assistant.css" />
+  <style>
+    .reader-back { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 14px; color: var(--text-sub); font-size: 12.5px; }
+    .reader-back:hover { color: var(--primary); }
+    .reader-back .icon { width: 15px; height: 15px; }
+    .reader-head__tags { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+    .reader-source-link { color: var(--primary); }
+    .reader-source-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+    .reader-sources { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 12px; }
+    .reader-sources a { display: inline-flex; align-items: center; gap: 5px; color: var(--primary); font-size: 12.5px; }
+    .reader-sources a:hover { text-decoration: underline; text-underline-offset: 3px; }
+    .reader-flip { text-align: left; color: inherit; cursor: pointer; }
+    .reader-flip__text { display: block; line-height: 1.65; }
+    .reader-flip.is-flipped { border-color: var(--primary); background: var(--primary-soft); }
+    .reader-flip:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+    .reader-explain { font-size: 14px; line-height: 1.85; color: var(--text); }
+    .reader-explain p + p { margin-top: 10px; }
+    .reader-explain__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--border); }
+    .reader-loading { display: flex; flex-direction: column; gap: 10px; padding: 4px 0 8px; }
+    .reader-toast-host { position: fixed; left: 50%; bottom: 76px; transform: translateX(-50%); z-index: 80; display: flex; flex-direction: column; gap: 8px; align-items: center; pointer-events: none; }
+    .reader-toast-host .toast { pointer-events: auto; }
+    .reader-undo { border: 0; background: transparent; padding: 0 2px; color: var(--primary-soft); font-size: 12px; text-decoration: underline; text-underline-offset: 3px; }
+    .reader-undo:hover { opacity: .75; }
+    .reader-nav { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-top: 28px; padding-top: 18px; border-top: 1px solid var(--border); }
+    @media (max-width: 560px) {
+      .reader-nav { flex-direction: column; align-items: stretch; }
+      .reader-nav .btn { width: 100%; }
+    }
+  </style>
+</head>
+<body data-page="notes">
+  <aside class="app-nav" aria-label="主导航">
+    <a class="brand" href="index.html">
+      <span class="brand-mark" aria-hidden="true">PAI</span>
+      <span class="brand-copy"><strong>个人 AI 学习</strong><small>Personal AI Learning</small></span>
+    </a>
+    <nav class="nav-list">
+      <a class="nav-item" data-nav="home" href="index.html"><span data-icon="home"></span><span>学习概览</span></a>
+      <a class="nav-item" data-nav="chat" href="chat.html"><span data-icon="message-square"></span><span>对话讲解</span></a>
+      <a class="nav-item" data-nav="notes" href="notes.html"><span data-icon="book-open"></span><span>笔记库</span><span class="nav-badge">12</span></a>
+      <a class="nav-item" data-nav="profile" href="profile.html"><span data-icon="fingerprint"></span><span>学习画像</span></a>
+      <a class="nav-item" data-nav="review" href="review.html"><span data-icon="rotate-ccw"></span><span>复习队列</span><span class="nav-badge">4</span></a>
+      <a class="nav-item" data-nav="settings" href="settings.html"><span data-icon="sliders"></span><span>设置</span></a>
+    </nav>
+    <div class="nav-foot">
+      <div class="streak-line"><span data-icon="flame"></span><span>连续学习 12 天</span></div>
+      <div class="user-chip"><span class="avatar">林</span><div><strong>林致远</strong><small>软件工程 2024</small></div></div>
+    </div>
+  </aside>
+
+  <main class="app-content">
+    <div class="page page--reader">
+      <header class="reader-head reveal">
+        <a class="reader-back" href="notes.html"><span data-icon="arrow-left"></span><span>返回笔记库</span></a>
+        <div class="reader-head__tags">
+          <span class="tag tag--primary" id="reader-domain">Transformer</span>
+          <span class="tag">结构化笔记</span>
+          <span class="tag tag--accent">置顶</span>
+        </div>
+        <h1 id="reader-title">位置编码：从正弦到 RoPE</h1>
+        <div class="reader-meta">
+          <span>来源会话 <a class="reader-source-link" id="reader-source" href="chat.html">为什么 Transformer 需要位置编码？</a></span>
+          <span class="dot"></span>
+          <span id="reader-date">2026-10-30</span>
+          <span class="dot"></span>
+          <span>约 1460 字</span>
+          <span class="dot"></span>
+          <span class="tag tag--primary">已导出</span>
+        </div>
+        <div class="reader-actions">
+          <button class="btn btn--primary" type="button" id="export-btn"><span data-icon="download"></span>导出 Markdown</button>
+          <button class="btn" type="button" id="review-btn" aria-pressed="false"><span data-icon="plus"></span>加入复习</button>
+          <button class="btn btn--ghost" type="button" id="edit-btn"><span data-icon="edit"></span>编辑</button>
+        </div>
+      </header>
+
+      <div class="note-prose reveal" style="--d:1" id="note-prose" aria-live="polite">
+        <section>
+          <h2><span class="num">01</span>概念定义</h2>
+          <div class="reader-loading" aria-hidden="true">
+            <div class="skeleton" style="width: 96%"></div>
+            <div class="skeleton" style="width: 100%"></div>
+            <div class="skeleton" style="width: 72%"></div>
+          </div>
+        </section>
+        <section>
+          <h2><span class="num">02</span>直觉类比</h2>
+          <div class="reader-loading" aria-hidden="true">
+            <div class="skeleton" style="width: 88%"></div>
+            <div class="skeleton" style="width: 64%"></div>
+          </div>
+        </section>
+      </div>
+
+      <div class="aside-stack reveal" style="--d:2">
+        <section class="card aside-card" aria-labelledby="glossary-title">
+          <h3 id="glossary-title">
+            <span data-icon="book-open"></span>术语表
+            <span class="tag" id="glossary-count" style="margin-left: auto">4 条</span>
+          </h3>
+          <dl id="glossary-list"></dl>
+        </section>
+
+        <section class="card aside-card" aria-labelledby="cards-title">
+          <h3 id="cards-title">
+            <span data-icon="layers"></span>复习卡片
+            <span class="field-note" style="margin-left: auto">点卡片翻面</span>
+          </h3>
+          <div class="card-strip" id="card-strip"></div>
+        </section>
+
+        <section class="card aside-card" aria-labelledby="source-title">
+          <h3 id="source-title"><span data-icon="link-2"></span>来源与锚点</h3>
+          <p class="field-note">本篇由「为什么 Transformer 需要位置编码？」会话自动结构化，共 6 节、3 个溯源锚点（a1–a3）。点击正文里的锚点，可以看到原对话中的原句与时间。</p>
+          <div class="reader-sources">
+            <a href="chat.html">打开原对话 <span data-icon="external-link"></span></a>
+            <a href="review.html">去复习队列 <span data-icon="rotate-ccw"></span></a>
+          </div>
+        </section>
+      </div>
+
+      <nav class="reader-nav reveal" style="--d:3" aria-label="笔记导航">
+        <a class="btn" href="notes.html"><span data-icon="arrow-left"></span>返回笔记库</a>
+        <a class="btn btn--primary" href="note.html">下一篇 · 多头注意力<span data-icon="arrow-right"></span></a>
+      </nav>
+    </div>
+  </main>
+
+  <!-- 锚点浮层 -->
+  <div class="anchor-pop" id="anchor-pop" hidden>
+    <div class="pop-title"><span data-icon="quote"></span><span id="anchor-pop-meta">原对话 · 09:32</span></div>
+    <blockquote id="anchor-pop-quote"></blockquote>
+    <a href="chat.html">打开原对话 <span data-icon="arrow-up-right"></span></a>
+  </div>
+
+  <!-- 划词浮层 -->
+  <div class="selection-menu" id="selection-menu" hidden role="menu" aria-label="划词操作">
+    <button type="button" id="sel-explain" role="menuitem"><span data-icon="sparkles"></span>解释这段</button>
+    <button type="button" id="sel-glossary" role="menuitem"><span data-icon="plus"></span>加入术语表</button>
+  </div>
+
+  <!-- 划词解释弹窗 -->
+  <div class="modal-backdrop" id="explain-modal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="explain-heading">
+      <div class="modal__head">
+        <div>
+          <h3 id="explain-heading">划词解释</h3>
+          <p id="explain-sub">正在读取选中的内容…</p>
+        </div>
+        <button class="icon-btn" type="button" data-modal-close aria-label="关闭"><span data-icon="x"></span></button>
+      </div>
+      <div class="modal__body" id="explain-body">
+        <div class="reader-loading">
+          <div class="skeleton" style="width: 92%"></div>
+          <div class="skeleton" style="width: 100%"></div>
+          <div class="skeleton" style="width: 68%"></div>
+        </div>
+      </div>
+      <div class="modal__foot">
+        <button class="btn" type="button" data-modal-close>收起</button>
+        <a class="btn btn--primary" href="chat.html">在对话里继续追问<span data-icon="arrow-right"></span></a>
+      </div>
+    </div>
+  </div>
+
+  <div class="reader-toast-host" id="reader-toast-host" aria-live="polite"></div>
+
+  <script src="icons.js"></script>
+  <script src="mock.js"></script>
+  <script src="api.js"></script>
+  <script src="app.js"></script>
+  <script src="assistant.js"></script>
+  <script>
+    (function () {
+      var $ = window.ui.$;
+      var $$ = window.ui.$$;
+      var prose = document.getElementById("note-prose");
+      var selMenu = document.getElementById("selection-menu");
+      var pop = document.getElementById("anchor-pop");
+      var popQuote = document.getElementById("anchor-pop-quote");
+      var popMeta = document.getElementById("anchor-pop-meta");
+      var detail = null;
+      var anchorMap = {};
+      var currentSelection = "";
+      var activeAnchor = null;
+
+      function esc(text) {
+        return String(text).replace(/[&<>"']/g, function (c) {
+          return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+        });
+      }
+
+      function clamp(value, min, max) {
+        return Math.min(Math.max(value, min), max);
+      }
+
+      function hideSelection() {
+        selMenu.hidden = true;
+        currentSelection = "";
+      }
+
+      function hideAnchorPop() {
+        pop.hidden = true;
+        if (activeAnchor) {
+          activeAnchor.classList.remove("is-active");
+          activeAnchor = null;
+        }
+      }
+
+      function hideFloats() {
+        hideSelection();
+        hideAnchorPop();
+      }
+
+      /* ---------- 正文渲染 ---------- */
+      function renderDetail(note) {
+        detail = note;
+        anchorMap = {};
+        note.anchors.forEach(function (a) { anchorMap[a.id] = a; });
+
+        document.getElementById("reader-title").textContent = note.title;
+        document.getElementById("reader-domain").textContent = note.domain;
+        document.getElementById("reader-source").textContent = note.sourceTitle;
+        document.getElementById("reader-date").textContent = note.date;
+
+        prose.innerHTML = note.sections.map(function (s, i) {
+          var num = String(i + 1).padStart(2, "0");
+          return (
+            "<section>" +
+              '<h2><span class="num">' + num + "</span>" + esc(s.h) + "</h2>" +
+              s.body +
+            "</section>"
+          );
+        }).join("");
+
+        renderGlossary(note.glossary);
+        renderCards(note.cards);
+        window.renderIcons(prose);
+      }
+
+      /* ---------- 术语表 ---------- */
+      function glossaryHTML(g) {
+        return (
+          '<div class="glossary-item">' +
+            "<dt>" + esc(g.term) + "</dt>" +
+            "<dd>" + esc(g.def) + "</dd>" +
+          "</div>"
+        );
+      }
+
+      function renderGlossary(list) {
+        document.getElementById("glossary-list").innerHTML = list.map(glossaryHTML).join("");
+        updateGlossaryCount();
+      }
+
+      function updateGlossaryCount() {
+        var n = $$("#glossary-list .glossary-item").length;
+        document.getElementById("glossary-count").textContent = n + " 条";
+      }
+
+      /* ---------- 复习卡片 ---------- */
+      function renderCards(cards) {
+        document.getElementById("card-strip").innerHTML = cards.map(function (c) {
+          return (
+            '<button class="mini-card reader-flip" type="button" data-front="' + esc(c.front) + '" data-back="' + esc(c.back) + '">' +
+              "<strong>问题</strong>" +
+              '<span class="reader-flip__text">' + esc(c.front) + "</span>" +
+            "</button>"
+          );
+        }).join("");
+      }
+
+      document.getElementById("card-strip").addEventListener("click", function (e) {
+        var card = e.target.closest(".mini-card");
+        if (!card) return;
+        var flipped = card.classList.toggle("is-flipped");
+        card.querySelector("strong").textContent = flipped ? "答案" : "问题";
+        card.querySelector(".reader-flip__text").textContent = flipped
+          ? card.getAttribute("data-back")
+          : card.getAttribute("data-front");
+      });
+
+      /* ---------- 锚点浮层 ---------- */
+      function showAnchorPop(anchorEl) {
+        var item = anchorMap[anchorEl.getAttribute("data-anchor")];
+        if (!item) return;
+        hideSelection();
+        if (activeAnchor === anchorEl && !pop.hidden) {
+          hideAnchorPop();
+          return;
+        }
+        activeAnchor = anchorEl;
+        $$(".anchor.is-active", prose).forEach(function (a) { a.classList.remove("is-active"); });
+        anchorEl.classList.add("is-active");
+
+        popMeta.textContent = "原对话 · " + item.at;
+        popQuote.textContent = item.quote;
+        pop.hidden = false;
+
+        var rect = anchorEl.getBoundingClientRect();
+        var w = pop.offsetWidth;
+        var h = pop.offsetHeight;
+        var left = clamp(rect.left + rect.width / 2 - w / 2, 12, window.innerWidth - w - 12);
+        var top = rect.bottom + 8;
+        if (top + h > window.innerHeight - 12) top = Math.max(12, rect.top - h - 8);
+        pop.style.left = left + "px";
+        pop.style.top = top + "px";
+      }
+
+      prose.addEventListener("click", function (e) {
+        var anchorEl = e.target.closest(".anchor");
+        if (!anchorEl) return;
+        e.stopPropagation();
+        showAnchorPop(anchorEl);
+      });
+
+      /* ---------- 划词浮层 ---------- */
+      prose.addEventListener("mouseup", function () {
+        setTimeout(function () {
+          var selection = window.getSelection();
+          var text = selection ? String(selection).trim() : "";
+          if (!text || text.length < 4 || !selection.rangeCount) {
+            hideSelection();
+            return;
+          }
+          var range = selection.getRangeAt(0);
+          if (!prose.contains(range.commonAncestorContainer)) {
+            hideSelection();
+            return;
+          }
+          var rect = range.getBoundingClientRect();
+          if (!rect || (rect.width === 0 && rect.height === 0)) return;
+
+          currentSelection = text;
+          hideAnchorPop();
+          selMenu.hidden = false;
+          var w = selMenu.offsetWidth;
+          var h = selMenu.offsetHeight;
+          var left = clamp(rect.left + rect.width / 2 - w / 2, 12, window.innerWidth - w - 12);
+          var top = rect.bottom + 8;
+          if (top + h > window.innerHeight - 12) top = Math.max(12, rect.top - h - 8);
+          selMenu.style.left = left + "px";
+          selMenu.style.top = top + "px";
+        }, 0);
+      });
+
+      /* ---------- 解释这段 ---------- */
+      document.getElementById("sel-explain").addEventListener("click", function () {
+        var text = currentSelection;
+        hideSelection();
+        if (!text) return;
+        var sub = document.getElementById("explain-sub");
+        var body = document.getElementById("explain-body");
+        sub.textContent = "已选中 " + text.length + " 字：" + (text.length > 42 ? text.slice(0, 42) + "…" : text);
+        body.innerHTML =
+          '<div class="reader-loading">' +
+            '<div class="skeleton" style="width: 92%"></div>' +
+            '<div class="skeleton" style="width: 100%"></div>' +
+            '<div class="skeleton" style="width: 68%"></div>' +
+          "</div>";
+        window.ui.openModal("explain-modal");
+
+        api.explainSelection(text).then(function (res) {
+          var badge = res.isSummary
+            ? '<span class="tag tag--accent"><span data-icon="file-text"></span>已转为总结</span>'
+            : '<span class="tag tag--primary">L1 · 简要解释</span>';
+          body.innerHTML =
+            '<div class="reader-explain">' + res.answer + "</div>" +
+            '<div class="reader-explain__meta">' + badge +
+              '<span class="field-note">基于当前笔记语境生成 · 引用锚点 a1、a3</span>' +
+            "</div>";
+          window.renderIcons(body);
+        });
+      });
+
+      /* ---------- 加入术语表（含 5 秒撤销） ---------- */
+      function toastUndo(message, onUndo) {
+        var host = document.getElementById("reader-toast-host");
+        var el = document.createElement("div");
+        el.className = "toast";
+        el.innerHTML =
+          '<span data-icon="check-circle"></span><span>' + message + "</span>" +
+          '<button type="button" class="reader-undo">撤销</button>';
+        host.appendChild(el);
+        window.renderIcons(el);
+        var timer = setTimeout(remove, 5000);
+        function remove() {
+          clearTimeout(timer);
+          if (el.parentNode) el.remove();
+        }
+        el.querySelector(".reader-undo").addEventListener("click", function () {
+          remove();
+          onUndo();
+        });
+      }
+
+      document.getElementById("sel-glossary").addEventListener("click", function () {
+        var text = currentSelection;
+        hideSelection();
+        if (!text) return;
+        var term = text.length > 36 ? text.slice(0, 36) + "…" : text;
+        api.addGlossary({
+          term: term,
+          def: "划词加入 · 来自本笔记，待复习时补充定义。"
+        }).then(function (item) {
+          var list = document.getElementById("glossary-list");
+          var wrap = document.createElement("div");
+          wrap.className = "glossary-item";
+          wrap.innerHTML = "<dt>" + esc(item.term) + "</dt><dd>" + esc(item.def) + "（刚刚加入）</dd>";
+          list.appendChild(wrap);
+          updateGlossaryCount();
+          toastUndo("已加入术语表：" + esc(item.term), function () {
+            wrap.remove();
+            updateGlossaryCount();
+            window.ui.toast("已撤销，术语表已移除「" + esc(item.term) + "」");
+          });
+        });
+      });
+
+      /* ---------- 关闭浮层 ---------- */
+      document.addEventListener("mousedown", function (e) {
+        if (!selMenu.contains(e.target)) hideSelection();
+        if (!pop.contains(e.target) && !e.target.closest(".anchor")) hideAnchorPop();
+      });
+
+      window.addEventListener("scroll", hideFloats, true);
+      window.addEventListener("resize", hideFloats);
+
+      /* ---------- 导出 Markdown ---------- */
+      document.getElementById("export-btn").addEventListener("click", function () {
+        var btn = this;
+        btn.disabled = true;
+        api.exportNote("n1").then(function (res) {
+          window.ui.download(res.filename, res.markdown);
+          btn.disabled = false;
+          window.ui.toast("已导出 " + res.filename);
+        });
+      });
+
+      /* ---------- 加入复习 ---------- */
+      var inReview = false;
+      document.getElementById("review-btn").addEventListener("click", function () {
+        inReview = !inReview;
+        this.classList.toggle("btn--primary", inReview);
+        this.setAttribute("aria-pressed", String(inReview));
+        this.innerHTML = inReview
+          ? '<span data-icon="check"></span>已加入复习'
+          : '<span data-icon="plus"></span>加入复习';
+        window.renderIcons(this);
+        window.ui.toast(inReview ? "已加入复习队列，明天优先出现" : "已从复习队列移除");
+      });
+
+      /* ---------- 编辑 ---------- */
+      document.getElementById("edit-btn").addEventListener("click", function () {
+        window.ui.toast("编辑模式原型演示：正文已解锁，修改暂不写入本地数据");
+      });
+
+      /* ---------- 载入详情 ---------- */
+      api.getNote("n1").then(renderDetail);
+    })();
+  </script>
+</body>
+</html>

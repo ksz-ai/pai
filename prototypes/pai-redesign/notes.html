@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>笔记库 · PAI 个人 AI 学习</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="assistant.css" />
+  <style>
+    .notes-stats { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: -6px 0 22px; color: var(--text-sub); font-size: 12.5px; }
+    .notes-stats strong { font-family: var(--font-mono); font-weight: 600; font-size: 13px; color: var(--text); }
+    .notes-stats .notes-sep { width: 3px; height: 3px; border-radius: 50%; background: var(--border-strong); }
+    .notes-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+    .notes-pin { margin-left: auto; }
+    .notes-form { display: flex; flex-direction: column; gap: 14px; }
+    .notes-check-list { display: flex; flex-direction: column; gap: 8px; max-height: 286px; overflow: auto; padding: 2px; }
+    .notes-check {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 10px 12px;
+      border: 1px solid var(--border); border-radius: var(--r-md);
+      background: var(--surface);
+      cursor: pointer;
+      transition: border-color .12s var(--ease), background .12s var(--ease);
+    }
+    .notes-check:hover { border-color: var(--border-strong); background: var(--surface-alt); }
+    .notes-check:has(input:checked) { border-color: var(--primary); background: var(--primary-soft); }
+    .notes-check input { margin: 3px 0 0; flex: none; accent-color: var(--primary); }
+    .notes-check__main { flex: 1; min-width: 0; }
+    .notes-check__main strong { display: block; font-size: 13.5px; line-height: 1.45; }
+    .notes-check__main small { display: block; margin-top: 2px; color: var(--text-sub); font-size: 11.5px; }
+    .notes-merge-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; color: var(--text-sub); font-size: 12px; }
+    .notes-merge-foot strong { font-family: var(--font-mono); font-weight: 600; color: var(--primary); }
+    @media (max-width: 560px) {
+      .notes-stats { margin-top: 0; }
+      .notes-merge-foot { flex-direction: column; align-items: flex-start; gap: 4px; }
+    }
+  </style>
+</head>
+<body data-page="notes">
+  <aside class="app-nav" aria-label="主导航">
+    <a class="brand" href="index.html">
+      <span class="brand-mark" aria-hidden="true">PAI</span>
+      <span class="brand-copy"><strong>个人 AI 学习</strong><small>Personal AI Learning</small></span>
+    </a>
+    <nav class="nav-list">
+      <a class="nav-item" data-nav="home" href="index.html"><span data-icon="home"></span><span>学习概览</span></a>
+      <a class="nav-item" data-nav="chat" href="chat.html"><span data-icon="message-square"></span><span>对话讲解</span></a>
+      <a class="nav-item" data-nav="notes" href="notes.html"><span data-icon="book-open"></span><span>笔记库</span><span class="nav-badge">12</span></a>
+      <a class="nav-item" data-nav="profile" href="profile.html"><span data-icon="fingerprint"></span><span>学习画像</span></a>
+      <a class="nav-item" data-nav="review" href="review.html"><span data-icon="rotate-ccw"></span><span>复习队列</span><span class="nav-badge">4</span></a>
+      <a class="nav-item" data-nav="settings" href="settings.html"><span data-icon="sliders"></span><span>设置</span></a>
+    </nav>
+    <div class="nav-foot">
+      <div class="streak-line"><span data-icon="flame"></span><span>连续学习 12 天</span></div>
+      <div class="user-chip"><span class="avatar">林</span><div><strong>林致远</strong><small>软件工程 2024</small></div></div>
+    </div>
+  </aside>
+
+  <main class="app-content">
+    <div class="page">
+      <header class="page-head reveal">
+        <div class="page-head__main">
+          <span class="eyebrow">LIBRARY · 12 篇笔记</span>
+          <h1>笔记库</h1>
+          <p class="lede">每篇笔记都由对话自动结构化：讲解、公式与追问被整理成六节，正文里的 a1、a2 锚点可以一键回到原对话的那一句。</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn" type="button" data-modal-open="merge-modal"><span data-icon="merge"></span>批量合并</button>
+          <button class="btn btn--primary" type="button" data-modal-open="new-note-modal"><span data-icon="plus"></span>新建笔记</button>
+        </div>
+      </header>
+
+      <section class="notes-stats reveal" style="--d:1" aria-label="笔记统计">
+        <span>已归类 <strong>11</strong> 篇</span>
+        <span class="notes-sep"></span>
+        <span>未分类 <strong>1</strong> 篇</span>
+        <span class="notes-sep"></span>
+        <span>置顶 <strong>2</strong> 篇</span>
+        <span class="notes-sep"></span>
+        <span>当前显示 <strong id="visible-count">12</strong> 篇</span>
+      </section>
+
+      <section class="toolbar reveal" style="--d:2" aria-label="笔记筛选">
+        <div class="search-field">
+          <span data-icon="search"></span>
+          <input class="input" type="search" id="note-search" placeholder="搜索标题、摘要、标签或概念" aria-label="搜索笔记" />
+        </div>
+        <span class="spacer"></span>
+        <span style="font-size: 12px; color: var(--text-sub)">排序</span>
+        <div class="segmented" id="sort-seg" role="group" aria-label="排序方式">
+          <button type="button" class="is-active" data-sort="recent">最近更新</button>
+          <button type="button" data-sort="oldest">最早</button>
+          <button type="button" data-sort="title">标题</button>
+        </div>
+      </section>
+
+      <section class="domain-bar reveal" style="--d:3" id="domain-bar" aria-label="按领域筛选">
+        <button type="button" class="chip is-active" data-domain="全部">全部</button>
+        <button type="button" class="chip" data-domain="Transformer">Transformer</button>
+        <button type="button" class="chip" data-domain="深度学习基础">深度学习基础</button>
+        <button type="button" class="chip" data-domain="Python 工程">Python 工程</button>
+        <button type="button" class="chip" data-domain="论文复现">论文复现</button>
+        <button type="button" class="chip" data-domain="数学基础">数学基础</button>
+      </section>
+
+      <section class="note-grid reveal" style="--d:4" id="note-grid" aria-live="polite" aria-label="笔记列表"></section>
+    </div>
+  </main>
+
+  <!-- 新建笔记 -->
+  <div class="modal-backdrop" id="new-note-modal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="new-note-heading">
+      <div class="modal__head">
+        <div>
+          <h3 id="new-note-heading">新建笔记</h3>
+          <p>手写笔记同样会进入复习队列，并在阅读页保留编辑与导出入口。</p>
+        </div>
+        <button class="icon-btn" type="button" data-modal-close aria-label="关闭"><span data-icon="x"></span></button>
+      </div>
+      <div class="modal__body">
+        <div class="notes-form">
+          <div class="field">
+            <label for="new-note-title">标题</label>
+            <input class="input" id="new-note-title" type="text" placeholder="例如：为什么正弦编码需要频率分层" />
+          </div>
+          <div class="field">
+            <label for="new-note-domain">领域</label>
+            <select class="select" id="new-note-domain">
+              <option value="未分类" selected>未分类</option>
+              <option value="Transformer">Transformer</option>
+              <option value="深度学习基础">深度学习基础</option>
+              <option value="Python 工程">Python 工程</option>
+              <option value="论文复现">论文复现</option>
+              <option value="数学基础">数学基础</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="new-note-body">正文</label>
+            <textarea class="textarea" id="new-note-body" placeholder="先写下你自己的理解，稍后可以让 AI 补一段对照讲解。"></textarea>
+            <span class="field-note">保存后可随时在阅读页继续编辑与导出 Markdown。</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal__foot">
+        <button class="btn" type="button" data-modal-close>取消</button>
+        <button class="btn btn--primary" type="button" id="new-note-save"><span data-icon="plus"></span>保存笔记</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 批量合并 -->
+  <div class="modal-backdrop" id="merge-modal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="merge-heading">
+      <div class="modal__head">
+        <div>
+          <h3 id="merge-heading">批量合并为总纲</h3>
+          <p>勾选 2 篇以上同一领域的笔记，AI 会抽取共同概念并生成一篇可溯源的总纲。</p>
+        </div>
+        <button class="icon-btn" type="button" data-modal-close aria-label="关闭"><span data-icon="x"></span></button>
+      </div>
+      <div class="modal__body">
+        <div class="notes-check-list" id="merge-list">
+          <span class="field-note">正在读取可合并的笔记…</span>
+        </div>
+        <div class="notes-merge-foot">
+          <span id="merge-count">已选 0 篇</span>
+          <span>合并只影响展示，不会删除原笔记</span>
+        </div>
+      </div>
+      <div class="modal__foot">
+        <button class="btn" type="button" data-modal-close>取消</button>
+        <button class="btn btn--primary" type="button" id="merge-confirm"><span data-icon="merge"></span>合并为总纲</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="icons.js"></script>
+  <script src="mock.js"></script>
+  <script src="api.js"></script>
+  <script src="app.js"></script>
+  <script src="assistant.js"></script>
+  <script>
+    (function () {
+      var $ = window.ui.$;
+      var $$ = window.ui.$$;
+      var grid = document.getElementById("note-grid");
+      var searchInput = document.getElementById("note-search");
+      var mergeList = document.getElementById("merge-list");
+      var state = { query: "", domain: "全部", sort: "recent" };
+      var reqSeq = 0;
+      var debounceTimer = null;
+
+      function esc(text) {
+        return String(text).replace(/[&<>"']/g, function (c) {
+          return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+        });
+      }
+
+      function skeletonCards(n) {
+        var one =
+          '<article class="note-card" aria-hidden="true">' +
+            '<div class="skeleton" style="width: 68px; height: 10px"></div>' +
+            '<div class="skeleton" style="width: 78%; height: 20px"></div>' +
+            '<div class="skeleton" style="width: 96%"></div>' +
+            '<div class="skeleton" style="width: 88%"></div>' +
+            '<div class="skeleton" style="width: 56%; margin-top: 10px"></div>' +
+          "</article>";
+        var out = "";
+        for (var i = 0; i < n; i++) out += one;
+        return out;
+      }
+
+      function cardHTML(n) {
+        return (
+          '<article class="note-card' + (n.pinned ? " is-pinned" : "") + '">' +
+            '<div class="note-card__top">' +
+              '<span class="note-card__domain">' + esc(n.domain) + "</span>" +
+              (n.pinned ? '<span class="tag tag--accent notes-pin">置顶</span>' : "") +
+            "</div>" +
+            '<h3><a href="note.html">' + esc(n.title) + "</a></h3>" +
+            "<p>" + esc(n.excerpt) + "</p>" +
+            '<div class="notes-tags">' +
+              n.tags.map(function (t) { return '<span class="tag">' + esc(t) + "</span>"; }).join("") +
+            "</div>" +
+            '<div class="note-card__foot">' +
+              '<span class="mono">' + n.words.toLocaleString("zh-CN") + " 字</span>" +
+              '<span class="tag ' + (n.status === "已导出" ? "tag--primary" : "") + '">' + esc(n.status) + "</span>" +
+              '<span class="spacer"></span>' +
+              "<span>" + esc(n.updatedAt) + "</span>" +
+            "</div>" +
+          "</article>"
+        );
+      }
+
+      function emptyHTML() {
+        var cond = [];
+        if (state.query) cond.push("关键词「" + state.query + "」");
+        if (state.domain !== "全部") cond.push("领域「" + state.domain + "」");
+        var desc = cond.length
+          ? "没有命中 " + cond.join("、") + " 的笔记。换个说法，或者清空筛选看全部 12 篇。"
+          : "暂时还没有笔记。新建一篇，或先在对话里问一个问题。";
+        return (
+          '<div class="empty" style="grid-column: 1 / -1" role="status">' +
+            '<span data-icon="search"></span>' +
+            "<h3>没有匹配的笔记</h3>" +
+            "<p>" + esc(desc) + "</p>" +
+            '<button class="btn" type="button" id="clear-filter"><span data-icon="undo-2"></span>清除筛选</button>' +
+          "</div>"
+        );
+      }
+
+      function renderNotes(list) {
+        grid.innerHTML = list.length ? list.map(cardHTML).join("") : emptyHTML();
+        window.renderIcons(grid);
+        var countEl = document.getElementById("visible-count");
+        if (countEl) countEl.textContent = String(list.length);
+      }
+
+      function load() {
+        var seq = ++reqSeq;
+        grid.innerHTML = skeletonCards(4);
+        api.getNotes({
+          query: state.query,
+          domain: state.domain,
+          sort: state.sort === "recent" ? "" : state.sort
+        }).then(function (list) {
+          if (seq !== reqSeq) return;
+          renderNotes(list);
+        });
+      }
+
+      /* 搜索：300ms 防抖 */
+      searchInput.addEventListener("input", function () {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(function () {
+          state.query = searchInput.value.trim();
+          load();
+        }, 300);
+      });
+
+      /* 领域筛选 */
+      document.getElementById("domain-bar").addEventListener("click", function (e) {
+        var chip = e.target.closest(".chip");
+        if (!chip) return;
+        $$(".chip", this).forEach(function (c) { c.classList.remove("is-active"); });
+        chip.classList.add("is-active");
+        state.domain = chip.getAttribute("data-domain");
+        load();
+      });
+
+      /* 排序 */
+      document.getElementById("sort-seg").addEventListener("click", function (e) {
+        var btn = e.target.closest("button");
+        if (!btn) return;
+        state.sort = btn.getAttribute("data-sort");
+        load();
+      });
+
+      /* 空状态：清除筛选 */
+      grid.addEventListener("click", function (e) {
+        if (!e.target.closest("#clear-filter")) return;
+        state.query = "";
+        state.domain = "全部";
+        state.sort = "recent";
+        searchInput.value = "";
+        $$("#domain-bar .chip").forEach(function (c) {
+          c.classList.toggle("is-active", c.getAttribute("data-domain") === "全部");
+        });
+        $$("#sort-seg button").forEach(function (b) {
+          b.classList.toggle("is-active", b.getAttribute("data-sort") === "recent");
+        });
+        load();
+      });
+
+      /* 合并弹窗列表 */
+      function buildMergeList(list) {
+        mergeList.innerHTML = list.map(function (n) {
+          return (
+            '<label class="notes-check">' +
+              '<input type="checkbox" value="' + n.id + '" />' +
+              '<div class="notes-check__main">' +
+                "<strong>" + esc(n.title) + "</strong>" +
+                "<small>" + esc(n.domain) + " · " + esc(n.updatedAt) + " · " + n.words + " 字 · " + esc(n.status) + "</small>" +
+              "</div>" +
+            "</label>"
+          );
+        }).join("");
+        updateMergeCount();
+      }
+
+      function updateMergeCount() {
+        var n = $$("#merge-list input:checked").length;
+        document.getElementById("merge-count").textContent = "已选 " + n + " 篇";
+      }
+
+      mergeList.addEventListener("change", updateMergeCount);
+
+      document.getElementById("merge-confirm").addEventListener("click", function () {
+        var chosen = $$("#merge-list input:checked");
+        if (chosen.length < 2) {
+          window.ui.toast("至少选择 2 篇笔记才能合并", "warn");
+          return;
+        }
+        var titles = chosen.map(function (cb) {
+          return cb.closest(".notes-check").querySelector("strong").textContent;
+        });
+        chosen.forEach(function (cb) { cb.checked = false; });
+        updateMergeCount();
+        window.ui.closeModal(document.getElementById("merge-modal"));
+        window.ui.toast("已把《" + titles[0] + "》等 " + titles.length + " 篇合并为总纲");
+      });
+
+      /* 新建笔记 */
+      document.getElementById("new-note-save").addEventListener("click", function () {
+        var titleInput = document.getElementById("new-note-title");
+        var domainSelect = document.getElementById("new-note-domain");
+        var bodyInput = document.getElementById("new-note-body");
+        var title = titleInput.value.trim();
+        if (!title) {
+          window.ui.toast("请先填写笔记标题", "warn");
+          titleInput.focus();
+          return;
+        }
+        var shown = title.length > 18 ? title.slice(0, 18) + "…" : title;
+        window.ui.closeModal(document.getElementById("new-note-modal"));
+        window.ui.toast("笔记《" + shown + "》已保存到「" + domainSelect.value + "」");
+        titleInput.value = "";
+        bodyInput.value = "";
+      });
+
+      /* 初始化：完整列表用于合并弹窗；当前列表按筛选条件加载 */
+      api.getNotes({}).then(buildMergeList);
+      load();
+    })();
+  </script>
+</body>
+</html>

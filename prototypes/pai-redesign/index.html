@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>学习概览 · PAI 个人 AI 学习</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="assistant.css" />
+</head>
+<body data-page="home">
+  <aside class="app-nav" aria-label="主导航">
+    <a class="brand" href="index.html">
+      <span class="brand-mark" aria-hidden="true">PAI</span>
+      <span class="brand-copy"><strong>个人 AI 学习</strong><small>Personal AI Learning</small></span>
+    </a>
+    <nav class="nav-list">
+      <a class="nav-item" data-nav="home" href="index.html"><span data-icon="home"></span><span>学习概览</span></a>
+      <a class="nav-item" data-nav="chat" href="chat.html"><span data-icon="message-square"></span><span>对话讲解</span></a>
+      <a class="nav-item" data-nav="notes" href="notes.html"><span data-icon="book-open"></span><span>笔记库</span><span class="nav-badge">12</span></a>
+      <a class="nav-item" data-nav="profile" href="profile.html"><span data-icon="fingerprint"></span><span>学习画像</span></a>
+      <a class="nav-item" data-nav="review" href="review.html"><span data-icon="rotate-ccw"></span><span>复习队列</span><span class="nav-badge">4</span></a>
+      <a class="nav-item" data-nav="settings" href="settings.html"><span data-icon="sliders"></span><span>设置</span></a>
+    </nav>
+    <div class="nav-foot">
+      <div class="streak-line"><span data-icon="flame"></span><span>连续学习 12 天</span></div>
+      <div class="user-chip"><span class="avatar">林</span><div><strong>林致远</strong><small>软件工程 2024</small></div></div>
+    </div>
+  </aside>
+
+  <main class="app-content">
+    <div class="page">
+      <header class="page-head reveal">
+        <div class="page-head__main">
+          <span class="eyebrow">2026 · 秋 · 第 46 天</span>
+          <h1>欢迎回来，林致远</h1>
+          <p class="lede">上次停在位置编码的「相对性」这一步。今天从一句话直觉继续，再把 RoPE 与正弦编码的差异收个尾。</p>
+        </div>
+        <div class="page-actions">
+          <a class="btn" href="notes.html"><span data-icon="search"></span>搜索笔记</a>
+          <a class="btn btn--primary" href="chat.html"><span data-icon="message-square"></span>继续对话</a>
+        </div>
+      </header>
+
+      <section class="hero reveal" style="--d:1" aria-labelledby="today-title">
+        <div>
+          <span class="tag tag--accent">今日继续</span>
+          <h2 id="today-title" style="margin-top: 12px">为什么 Transformer 需要位置编码？</h2>
+          <p>自注意力能看见所有词，却看不见顺序。这条会话已经推进到 RoPE 的旋转解释，还差最后一步「相对位置如何被点积表达」。</p>
+          <div class="hero-meta">
+            <span class="tag">Transformer</span>
+            <span class="tag">L2 · 深入</span>
+            <span class="tag">24 条消息</span>
+            <span class="tag tag--primary">画像已更新</span>
+          </div>
+          <div class="page-actions" style="margin-top: 18px">
+            <a class="btn btn--primary" href="chat.html"><span data-icon="play"></span>继续这条对话</a>
+            <a class="btn" href="note.html"><span data-icon="book-open"></span>读对应笔记</a>
+          </div>
+        </div>
+        <div class="hero-side">
+          <div class="mini-stat"><strong id="stat-due">4</strong><span>个概念今日到期</span></div>
+          <div class="mini-stat"><strong id="stat-week">5.1</strong><span>小时本周学习</span></div>
+          <div class="mini-stat"><strong id="stat-notes">12</strong><span>篇结构化笔记</span></div>
+        </div>
+      </section>
+
+      <section class="grid-3 reveal" style="--d:2; margin-top: 20px" aria-label="学习统计">
+        <div class="card stat-card">
+          <span class="label"><span data-icon="flame"></span>连续学习</span>
+          <strong>12 <span style="font-size: 13px; font-family: var(--font-body); color: var(--text-sub)">天</span></strong>
+          <small>最长记录 18 天 · 今日已完成 26 分钟</small>
+        </div>
+        <div class="card stat-card">
+          <span class="label"><span data-icon="target"></span>已掌握概念</span>
+          <strong>7 <span style="font-size: 13px; font-family: var(--font-body); color: var(--text-sub)">/ 19</span></strong>
+          <small>掌握度 ≥ 0.7 记为已掌握</small>
+        </div>
+        <div class="card stat-card">
+          <span class="label"><span data-icon="bar-chart"></span>本周节奏</span>
+          <strong>65 <span style="font-size: 13px; font-family: var(--font-body); color: var(--text-sub)">分钟/天</span></strong>
+          <small>周四为空白日，建议补一次 15 分钟复习</small>
+        </div>
+      </section>
+
+      <div class="section-head reveal" style="--d:3">
+        <h2>最近会话</h2>
+        <a href="chat.html">打开对话工作台 <span data-icon="arrow-right"></span></a>
+      </div>
+      <section class="card card-pad reveal" style="--d:3" aria-label="最近会话列表">
+        <div id="conv-list" aria-live="polite">
+          <div class="list-row"><div class="skeleton" style="width: 52%"></div></div>
+          <div class="list-row"><div class="skeleton" style="width: 68%"></div></div>
+          <div class="list-row"><div class="skeleton" style="width: 44%"></div></div>
+        </div>
+      </section>
+
+      <div class="grid-2 reveal" style="--d:4; margin-top: 20px; align-items: start">
+        <section class="card card-pad" aria-labelledby="review-title">
+          <div class="section-head" style="margin: 0 0 8px">
+            <h2 id="review-title" style="font-size: 18px">今日待复习</h2>
+            <a href="review.html">进入队列 <span data-icon="arrow-right"></span></a>
+          </div>
+          <div id="review-mini">
+            <div class="skeleton" style="width: 60%; margin: 14px 0"></div>
+            <div class="skeleton" style="width: 48%; margin: 14px 0"></div>
+          </div>
+        </section>
+
+        <section class="card card-pad" aria-labelledby="profile-title">
+          <div class="section-head" style="margin: 0 0 8px">
+            <h2 id="profile-title" style="font-size: 18px">画像快照</h2>
+            <a href="profile.html">查看全部 <span data-icon="arrow-right"></span></a>
+          </div>
+          <div id="profile-mini">
+            <div class="skeleton" style="width: 70%; margin: 14px 0"></div>
+            <div class="skeleton" style="width: 54%; margin: 14px 0"></div>
+          </div>
+        </section>
+      </div>
+
+      <section class="card card-pad reveal" style="--d:5; margin-top: 20px" aria-labelledby="rhythm-title">
+        <div class="section-head" style="margin: 0 0 4px">
+          <h2 id="rhythm-title" style="font-size: 18px">这周的学习节奏</h2>
+          <span class="hint">每天累计学习分钟数</span>
+        </div>
+        <div class="week-bars" id="week-bars" aria-hidden="true"></div>
+      </section>
+
+      <p style="margin-top: 28px; color: var(--text-sub); font-size: 12px; text-align: center">
+        原型演示 · 数据为本地 Mock，不连接真实模型 · 设计基线 PRD V1.0
+      </p>
+    </div>
+  </main>
+
+  <script src="icons.js"></script>
+  <script src="mock.js"></script>
+  <script src="api.js"></script>
+  <script src="app.js"></script>
+  <script src="assistant.js"></script>
+  <script>
+    (async function () {
+      var ui = window.ui;
+      var stats = await api.getStats();
+
+      document.getElementById("stat-due").textContent = String(stats.reviewDue);
+      document.getElementById("stat-notes").textContent = String(stats.notesCount);
+      var total = stats.weeklyMinutes.reduce(function (a, b) { return a + b; }, 0);
+      document.getElementById("stat-week").textContent = (total / 60).toFixed(1);
+
+      // 会话列表
+      var convos = (await api.getConversations()).slice(0, 6);
+      var list = document.getElementById("conv-list");
+      list.innerHTML = convos.map(function (c, i) {
+        return (
+          '<div class="list-row">' +
+            '<span class="conv-index">' + String(i + 1).padStart(2, "0") + "</span>" +
+            '<div class="list-row__main">' +
+              '<a class="list-row__title" href="chat.html">' + c.title + "</a>" +
+              '<span class="list-row__sub">' + c.summary + "</span>" +
+            "</div>" +
+            '<div class="conv-row__meta">' +
+              (c.pinned ? '<span class="tag tag--accent">置顶</span>' : "") +
+              '<span class="tag">' + c.depth + "</span>" +
+              '<span class="tag">' + c.messageCount + " 条</span>" +
+              '<span style="font-size: 12px">' + c.updatedAt + "</span>" +
+              '<a class="icon-btn" href="chat.html" aria-label="打开会话"><span data-icon="arrow-up-right"></span></a>' +
+            "</div>" +
+          "</div>"
+        );
+      }).join("");
+      window.renderIcons(list);
+
+      // 今日待复习
+      var dueItems = DB.reviewQueue.filter(function (r) { return r.due === "今天"; });
+      document.getElementById("review-mini").innerHTML = dueItems.map(function (r) {
+        return (
+          '<div class="list-row">' +
+            '<span class="tag tag--danger">' + r.concept + "</span>" +
+            '<div class="list-row__main"><span class="list-row__sub" style="margin: 0">上次回答「不熟」 · 间隔 ' + r.interval + " 天</span></div>" +
+            '<a class="btn btn--sm" href="review.html">复习</a>' +
+          "</div>"
+        );
+      }).join("");
+
+      // 画像快照（掌握度最低的 5 个）
+      var weak = DB.concepts.slice().sort(function (a, b) { return a.mastery - b.mastery; }).slice(0, 5);
+      document.getElementById("profile-mini").innerHTML = weak.map(function (k) {
+        var pct = Math.round(k.mastery * 100);
+        return (
+          '<div class="concept-row" style="padding: 9px 0">' +
+            '<span class="concept-name" style="width: 116px; font-size: 13px">' + k.name + "</span>" +
+            '<div class="concept-bar"><div class="bar ' + (pct < 30 ? "bar--low" : pct < 70 ? "bar--mid" : "") + '"><i style="--pct:' + pct + '%"></i></div></div>' +
+            '<span class="concept-value" style="width: 46px; font-size: 11.5px">' + pct + "%</span>" +
+          "</div>"
+        );
+      }).join("");
+
+      // 周节奏
+      var bars = document.getElementById("week-bars");
+      bars.innerHTML = stats.weeklyMinutes.map(function (m, i) {
+        var h = Math.max(6, Math.round((m / 80) * 72));
+        return (
+          '<div class="' + (i === 6 ? "is-today" : "") + '">' +
+            '<i style="height:' + h + 'px" title="' + m + ' 分钟"></i>' +
+            "<small>" + stats.weekLabels[i] + "</small>" +
+          "</div>"
+        );
+      }).join("");
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>设置 · PAI 个人 AI 学习</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="assistant.css" />
+  <style>
+    .settings-persona { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .settings-persona .icon { width: 16px; height: 16px; vertical-align: -3px; margin-right: 5px; }
+    .settings-spin { animation: settings-rotate 1s linear infinite; }
+    @keyframes settings-rotate { to { transform: rotate(360deg); } }
+    .settings-foot { margin-top: 26px; text-align: center; color: var(--text-sub); font-size: 12px; }
+  </style>
+</head>
+<body data-page="settings">
+  <aside class="app-nav" aria-label="主导航">
+    <a class="brand" href="index.html">
+      <span class="brand-mark" aria-hidden="true">PAI</span>
+      <span class="brand-copy"><strong>个人 AI 学习</strong><small>Personal AI Learning</small></span>
+    </a>
+    <nav class="nav-list">
+      <a class="nav-item" data-nav="home" href="index.html"><span data-icon="home"></span><span>学习概览</span></a>
+      <a class="nav-item" data-nav="chat" href="chat.html"><span data-icon="message-square"></span><span>对话讲解</span></a>
+      <a class="nav-item" data-nav="notes" href="notes.html"><span data-icon="book-open"></span><span>笔记库</span><span class="nav-badge">12</span></a>
+      <a class="nav-item" data-nav="profile" href="profile.html"><span data-icon="fingerprint"></span><span>学习画像</span></a>
+      <a class="nav-item" data-nav="review" href="review.html"><span data-icon="rotate-ccw"></span><span>复习队列</span><span class="nav-badge">4</span></a>
+      <a class="nav-item" data-nav="settings" href="settings.html"><span data-icon="sliders"></span><span>设置</span></a>
+    </nav>
+    <div class="nav-foot">
+      <div class="streak-line"><span data-icon="flame"></span><span>连续学习 12 天</span></div>
+      <div class="user-chip"><span class="avatar">林</span><div><strong>林致远</strong><small>软件工程 2024</small></div></div>
+    </div>
+  </aside>
+
+  <main class="app-content">
+    <div class="page page--narrow">
+      <header class="page-head reveal">
+        <div class="page-head__main">
+          <span class="eyebrow">SETTINGS</span>
+          <h1>设置</h1>
+          <p class="lede">保存即生效，无需重启。所有配置只作用于当前原型，不会触达真实服务。</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn--primary" id="save-settings"><span data-icon="check"></span>保存设置</button>
+        </div>
+      </header>
+
+      <section class="card settings-section reveal" style="--d:1" aria-labelledby="ai-title">
+        <h2 id="ai-title">AI 服务</h2>
+        <p class="section-note">选择服务商与模型。Key 只保存在浏览器本地，用于演示切换与连接测试。</p>
+
+        <div class="form-row">
+          <div class="label"><strong>服务商</strong><small>决定可用模型与默认端点</small></div>
+          <div class="provider-grid" id="provider-grid" role="radiogroup" aria-label="服务商"></div>
+        </div>
+
+        <div class="form-row">
+          <div class="label"><strong>API Key</strong><small>保存后用于在线讲解</small></div>
+          <div>
+            <div class="key-row">
+              <input class="input" id="api-key" type="text" autocomplete="off" spellcheck="false" aria-label="API Key" />
+              <button class="btn" id="toggle-key" aria-label="显示或隐藏 API Key"><span data-icon="eye"></span><span id="key-eye-label">显示</span></button>
+            </div>
+            <p class="field-note" style="margin-top: 7px">演示值仅保留在本地，不会发送到任何服务。</p>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="label"><strong>模型</strong><small>随服务商变化</small></div>
+          <div>
+            <div class="inline-controls">
+              <select class="select" id="model-select" style="max-width: 280px" aria-label="模型"></select>
+              <button class="btn" id="test-connection"><span data-icon="zap"></span>测试连接</button>
+            </div>
+            <div class="test-result" id="test-result" hidden></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card settings-section reveal" style="--d:2" aria-labelledby="pref-title">
+        <h2 id="pref-title">讲解偏好</h2>
+        <p class="section-note">决定讲解的语气、深度节奏与单会话成本上限。</p>
+
+        <div class="form-row">
+          <div class="label"><strong>导师人格</strong><small>影响提问方式与讲解结构</small></div>
+          <div class="provider-grid settings-persona" id="persona-grid" role="radiogroup" aria-label="导师人格"></div>
+        </div>
+
+        <div class="form-row">
+          <div class="label"><strong>单会话 Token 预算</strong><small>超出后自动压缩历史</small></div>
+          <div>
+            <div class="inline-controls">
+              <input class="range" id="budget-range" type="range" min="8000" max="64000" step="4000" value="32000" style="max-width: 320px" aria-label="单会话 Token 预算" />
+              <span class="value-pill" id="budget-value">32,000 tokens</span>
+            </div>
+            <p class="field-note" style="margin-top: 6px">范围 8,000 – 64,000，按 4,000 递增。</p>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="label"><strong>自动压缩</strong><small>达到 80% 自动压缩历史</small></div>
+          <div class="inline-controls">
+            <label class="switch"><input type="checkbox" id="auto-compact" aria-label="自动压缩历史" checked /><span></span></label>
+            <span class="field-note">达到 80% 自动压缩历史，保留结论与证据。</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="card settings-section reveal" style="--d:3" aria-labelledby="data-title">
+        <h2 id="data-title">通知与数据</h2>
+        <p class="section-note">通知只在浏览器内演示；数据导出为完整 JSON。</p>
+
+        <div class="form-row">
+          <div class="label"><strong>完成桌面通知</strong><small>复习与长任务完成时提醒</small></div>
+          <div class="inline-controls">
+            <label class="switch"><input type="checkbox" id="notify-switch" aria-label="完成桌面通知" checked /><span></span></label>
+            <span class="field-note">复习队列完成、笔记导出完成时通知。</span>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="label"><strong>导出全部数据</strong><small>画像 / 会话 / 笔记 / 设置</small></div>
+          <div class="inline-controls">
+            <button class="btn" id="export-data"><span data-icon="download"></span>导出 JSON</button>
+            <span class="field-note">包含 19 个概念与全部演示数据。</span>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="label"><strong>清除本地数据</strong><small>不可撤销</small></div>
+          <div>
+            <button class="btn btn--danger" data-modal-open="clear-modal"><span data-icon="trash-2"></span>清除本地数据</button>
+          </div>
+        </div>
+      </section>
+
+      <p class="settings-foot">原型不连接真实服务，Key 仅保存在浏览器本地演示。</p>
+    </div>
+  </main>
+
+  <div class="modal-backdrop" id="clear-modal" hidden>
+    <div class="modal">
+      <div class="modal__head">
+        <div>
+          <h3>清除本地数据</h3>
+          <p>将删除本机的画像、会话、笔记与设置缓存；原型中可通过刷新恢复。</p>
+        </div>
+        <button class="icon-btn" data-modal-close aria-label="关闭清除确认"><span data-icon="x"></span></button>
+      </div>
+      <div class="modal__body">
+        <div class="field">
+          <label for="clear-confirm">输入「清除」以确认</label>
+          <input class="input" id="clear-confirm" placeholder="清除" autocomplete="off" />
+          <p class="field-note">此操作不可撤销；云端数据（若已接入）不受影响。</p>
+        </div>
+      </div>
+      <div class="modal__foot">
+        <button class="btn" data-modal-close>取消</button>
+        <button class="btn btn--danger" id="clear-confirm-btn" disabled><span data-icon="trash-2"></span>确认清除</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="icons.js"></script>
+  <script src="mock.js"></script>
+  <script src="api.js"></script>
+  <script src="app.js"></script>
+  <script src="assistant.js"></script>
+  <script>
+    (function () {
+      var ui = window.ui;
+      var DB = window.DB;
+
+      var state = { key: "sk-demo-12345678", keyVisible: false, keyDirty: false, testing: false };
+      var rangeEl = document.getElementById("budget-range");
+
+      function providerByKey(key) {
+        for (var i = 0; i < DB.providers.length; i++) if (DB.providers[i].key === key) return DB.providers[i];
+        return null;
+      }
+      function currentProviderKey() {
+        var el = document.querySelector('input[name="provider"]:checked');
+        return el ? el.value : "deepseek";
+      }
+      function maskKey(k) {
+        if (!k) return "";
+        if (k.length <= 6) return "sk-••••";
+        return k.slice(0, 3) + "••••••••••••" + k.slice(-4);
+      }
+
+      function renderProviders() {
+        var host = document.getElementById("provider-grid");
+        host.innerHTML = DB.providers.map(function (p) {
+          return (
+            '<label class="provider">' +
+              '<input type="radio" name="provider" value="' + p.key + '"' + (p.name === DB.settings.provider ? " checked" : "") + ' />' +
+              '<strong>' + p.name + '</strong>' +
+              '<small>' + p.desc + '</small>' +
+            '</label>'
+          );
+        }).join("");
+      }
+
+      function fillModels(providerKey, selected) {
+        var list = DB.modelsByProvider[providerKey] || [];
+        var sel = document.getElementById("model-select");
+        sel.innerHTML = list.map(function (m) {
+          return '<option value="' + m + '">' + m + '</option>';
+        }).join("");
+        if (selected && list.indexOf(selected) > -1) sel.value = selected;
+      }
+
+      function renderKey() {
+        var input = document.getElementById("api-key");
+        var label = document.getElementById("key-eye-label");
+        if (state.keyVisible) {
+          input.value = state.key;
+          input.readOnly = false;
+          label.textContent = "隐藏";
+        } else {
+          input.value = state.keyDirty ? maskKey(state.key) : DB.settings.keyMasked;
+          input.readOnly = true;
+          label.textContent = "显示";
+        }
+      }
+
+      function setTestResult(kind, msg) {
+        var el = document.getElementById("test-result");
+        if (!kind) {
+          el.hidden = true;
+          el.className = "test-result";
+          el.innerHTML = "";
+          return;
+        }
+        el.hidden = false;
+        el.className = "test-result " + kind;
+        el.innerHTML = '<span data-icon="' + (kind === "ok" ? "check-circle" : "alert-circle") + '"></span><span>' + msg + '</span>';
+        window.renderIcons(el);
+      }
+
+      function renderBudget() {
+        document.getElementById("budget-value").textContent = Number(rangeEl.value).toLocaleString("en-US") + " tokens";
+      }
+
+      function renderPersonas() {
+        var host = document.getElementById("persona-grid");
+        host.innerHTML = DB.personas.map(function (p) {
+          return (
+            '<label class="provider">' +
+              '<input type="radio" name="persona" value="' + p.key + '"' + (p.key === DB.settings.persona ? " checked" : "") + ' />' +
+              '<strong><span data-icon="' + p.icon + '"></span>' + p.name + '</strong>' +
+              '<small>' + p.desc + '</small>' +
+            '</label>'
+          );
+        }).join("");
+        window.renderIcons(host);
+      }
+
+      renderProviders();
+      renderPersonas();
+      fillModels(currentProviderKey(), DB.settings.model);
+      renderKey();
+      rangeEl.value = String(DB.settings.budget);
+      renderBudget();
+      document.getElementById("notify-switch").checked = !!DB.settings.notify;
+      document.getElementById("auto-compact").checked = !!DB.settings.autoCompact;
+
+      /* 服务商切换 → 同步模型下拉 */
+      document.addEventListener("change", function (e) {
+        if (e.target && e.target.name === "provider") {
+          fillModels(e.target.value, null);
+          setTestResult(null);
+        }
+      });
+
+      /* Key 显隐 */
+      document.getElementById("toggle-key").addEventListener("click", function () {
+        state.keyVisible = !state.keyVisible;
+        renderKey();
+      });
+
+      document.getElementById("api-key").addEventListener("input", function (e) {
+        state.key = e.target.value;
+        state.keyDirty = true;
+        setTestResult(null);
+      });
+
+      /* 测试连接 */
+      var testBtn = document.getElementById("test-connection");
+      testBtn.addEventListener("click", function () {
+        if (state.testing) return;
+        state.testing = true;
+        setTestResult(null);
+        testBtn.disabled = true;
+        testBtn.innerHTML = '<span data-icon="loader" data-icon-class="icon settings-spin"></span>测试中…';
+        window.renderIcons(testBtn);
+
+        var providerKey = currentProviderKey();
+        var model = document.getElementById("model-select").value;
+
+        setTimeout(function () {
+          api.testConnection({ provider: providerKey, key: state.key, model: model }).then(function (res) {
+            setTestResult("ok", "连接成功 · " + res.latency + "ms · " + res.model);
+          }).catch(function () {
+            setTestResult("fail", "API Key 长度不足");
+          }).then(function () {
+            state.testing = false;
+            testBtn.disabled = false;
+            testBtn.innerHTML = '<span data-icon="zap"></span>测试连接';
+            window.renderIcons(testBtn);
+          });
+        }, 1100);
+      });
+
+      /* Token 预算 */
+      rangeEl.addEventListener("input", renderBudget);
+
+      /* 保存设置 */
+      document.getElementById("save-settings").addEventListener("click", function () {
+        var btn = this;
+        var providerKey = currentProviderKey();
+        var provider = providerByKey(providerKey);
+        var personaEl = document.querySelector('input[name="persona"]:checked');
+        var payload = {
+          provider: provider ? provider.name : DB.settings.provider,
+          model: document.getElementById("model-select").value,
+          key: state.key,
+          persona: personaEl ? personaEl.value : DB.settings.persona,
+          budget: Number(rangeEl.value),
+          notify: document.getElementById("notify-switch").checked,
+          autoCompact: document.getElementById("auto-compact").checked
+        };
+        btn.disabled = true;
+        api.saveSettings(payload).then(function () {
+          DB.settings.provider = payload.provider;
+          DB.settings.model = payload.model;
+          DB.settings.budget = payload.budget;
+          DB.settings.persona = payload.persona;
+          DB.settings.notify = payload.notify;
+          DB.settings.autoCompact = payload.autoCompact;
+          if (payload.key) DB.settings.keyMasked = maskKey(payload.key);
+          if (!payload.key || !payload.key.trim()) {
+            ui.toast("设置已保存，但未填写 API Key，在线讲解暂不可用", "warn");
+          } else {
+            ui.toast("设置已保存，下一次对话生效");
+          }
+          btn.disabled = false;
+        }).catch(function () {
+          ui.toast("保存失败，请稍后重试", "warn");
+          btn.disabled = false;
+        });
+      });
+
+      /* 导出全部数据 */
+      document.getElementById("export-data").addEventListener("click", function () {
+        ui.download("pai-data-2026-10-30.json", JSON.stringify(DB, null, 2));
+        ui.toast("已导出全部数据（JSON）");
+      });
+
+      /* 清除本地数据（二次确认） */
+      var clearInput = document.getElementById("clear-confirm");
+      var clearBtn = document.getElementById("clear-confirm-btn");
+      clearInput.addEventListener("input", function () {
+        clearBtn.disabled = clearInput.value.trim() !== "清除";
+      });
+      clearBtn.addEventListener("click", function () {
+        ui.toast("本地数据已清除（演示，刷新后恢复）");
+        clearInput.value = "";
+        clearBtn.disabled = true;
+        ui.closeModal(document.getElementById("clear-modal"));
+      });
+    })();
+  </script>
+</body>
+</html>

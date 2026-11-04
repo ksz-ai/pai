@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>对话讲解 · PAI 个人 AI 学习</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="assistant.css" />
+</head>
+<body data-page="chat">
+  <aside class="app-nav" aria-label="主导航">
+    <a class="brand" href="index.html">
+      <span class="brand-mark" aria-hidden="true">PAI</span>
+      <span class="brand-copy"><strong>个人 AI 学习</strong><small>Personal AI Learning</small></span>
+    </a>
+    <nav class="nav-list">
+      <a class="nav-item" data-nav="home" href="index.html"><span data-icon="home"></span><span>学习概览</span></a>
+      <a class="nav-item" data-nav="chat" href="chat.html"><span data-icon="message-square"></span><span>对话讲解</span></a>
+      <a class="nav-item" data-nav="notes" href="notes.html"><span data-icon="book-open"></span><span>笔记库</span><span class="nav-badge">12</span></a>
+      <a class="nav-item" data-nav="profile" href="profile.html"><span data-icon="fingerprint"></span><span>学习画像</span></a>
+      <a class="nav-item" data-nav="review" href="review.html"><span data-icon="rotate-ccw"></span><span>复习队列</span><span class="nav-badge">4</span></a>
+      <a class="nav-item" data-nav="settings" href="settings.html"><span data-icon="sliders"></span><span>设置</span></a>
+    </nav>
+    <div class="nav-foot">
+      <div class="streak-line"><span data-icon="flame"></span><span>连续学习 12 天</span></div>
+      <div class="user-chip"><span class="avatar">林</span><div><strong>林致远</strong><small>软件工程 2024</small></div></div>
+    </div>
+  </aside>
+
+  <main class="app-content">
+    <div class="page page--narrow">
+      <header class="chat-top reveal">
+        <div class="page-head__main">
+          <a class="eyebrow" href="index.html" style="display: inline-flex; align-items: center; gap: 6px; color: var(--text-sub)">
+            <span data-icon="arrow-left"></span>返回学习概览
+          </a>
+          <h1>为什么 Transformer 需要位置编码？</h1>
+          <p class="lede">自注意力看得见所有词，却看不见顺序。当前已经推进到 RoPE 的旋转解释，还差最后一步。</p>
+          <div class="hero-meta" style="margin-top: 12px">
+            <span class="tag">Transformer</span>
+            <span class="tag">24 条消息</span>
+            <span class="tag tag--primary">当前 L2 · 深入</span>
+            <a class="tag" href="profile.html">画像已更新 <span data-icon="arrow-up-right"></span></a>
+          </div>
+        </div>
+        <div class="budget" aria-label="会话 Token 预算">
+          <div class="budget__row"><span>会话 Token</span><span id="budget-text">20,400 / 32,000</span></div>
+          <div class="bar"><i id="budget-fill" style="--pct:64%"></i></div>
+          <div class="budget__row" style="margin-top: 6px"><span>达到 80% 自动压缩历史</span><span id="budget-pct">64%</span></div>
+        </div>
+      </header>
+
+      <div class="page-actions reveal" style="--d:1; margin: 14px 0 0">
+        <button class="btn btn--sm" type="button" data-modal-open="note-modal">
+          <span data-icon="sparkles"></span>生成笔记
+        </button>
+        <button class="btn btn--sm" type="button" data-modal-open="more-modal">
+          <span data-icon="more-horizontal"></span>更多
+        </button>
+        <span class="spacer" style="flex: 1"></span>
+        <span class="hint" style="color: var(--text-sub); font-size: 11.5px">判档依据：画像掌握度 0.3 / 0.7 阈值</span>
+      </div>
+
+      <p style="text-align: center; color: var(--text-sub); font-size: 11.5px; margin-top: 22px; letter-spacing: .06em">
+        已到达本次会话起点
+      </p>
+
+      <article class="thread" id="thread" aria-live="polite">
+        <div class="msg"><div class="skeleton" style="width: 46%; margin-bottom: 10px"></div><div class="skeleton" style="width: 82%; height: 58px"></div></div>
+        <div class="msg"><div class="skeleton" style="width: 34%;"></div></div>
+        <div class="msg"><div class="skeleton" style="width: 58%; margin-bottom: 10px"></div><div class="skeleton" style="width: 90%; height: 46px"></div></div>
+      </article>
+
+      <div class="composer-wrap">
+        <div class="suggests">
+          <button class="chip" type="button" data-suggest="用一句话总结位置编码的作用">用一句话总结</button>
+          <button class="chip" type="button" data-suggest="能举一个生活中的类比吗？">举个例子</button>
+          <button class="chip" type="button" data-suggest="RoPE 和正弦编码在长序列上差异有多大？">和正弦编码对比</button>
+        </div>
+        <div class="composer">
+          <label class="visually-hidden" for="composer-input" style="position: absolute; width: 1px; height: 1px; overflow: hidden">继续追问</label>
+          <textarea id="composer-input" rows="2" placeholder="继续追问，Enter 发送 / Shift + Enter 换行"></textarea>
+          <div class="composer__foot">
+            <span class="hint"><span class="kbd">Enter</span> 发送 · <span class="kbd">Shift</span> + <span class="kbd">Enter</span> 换行</span>
+            <span class="spacer"></span>
+            <span class="hint" id="send-hint">按画像自动判档</span>
+            <button class="btn btn--primary btn--sm" type="button" id="send-btn" disabled>
+              <span data-icon="send"></span>发送
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 生成笔记 -->
+  <div class="modal-backdrop" id="note-modal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="note-modal-title">
+      <div class="modal__head">
+        <div>
+          <h3 id="note-modal-title">把这条对话整理成笔记</h3>
+          <p>将按六段式结构生成，并保留 3 个可点击的溯源锚点。</p>
+        </div>
+        <button class="icon-btn" type="button" data-modal-close aria-label="关闭"><span data-icon="x"></span></button>
+      </div>
+      <div class="modal__body">
+        <div class="timeline" style="margin-top: 4px">
+          <div class="timeline-item"><strong>概念定义</strong><small>位置编码要解决的问题</small></div>
+          <div class="timeline-item"><strong>直觉类比</strong><small>指针与旋转</small></div>
+          <div class="timeline-item"><strong>数学形式</strong><small>正弦编码与 RoPE 点积</small></div>
+          <div class="timeline-item"><strong>代码对应</strong><small>最小实现片段</small></div>
+          <div class="timeline-item"><strong>常见误区</strong><small>三条高频误解</small></div>
+          <div class="timeline-item"><strong>自检问题</strong><small>三道题，答不上会进复习队列</small></div>
+        </div>
+        <div class="quote" style="margin-top: 14px">锚点 a1–a3 会链接回本会话的原始提问与回答，可随时核对来源。</div>
+      </div>
+      <div class="modal__foot">
+        <button class="btn" type="button" data-modal-close>取消</button>
+        <a class="btn btn--primary" href="note.html"><span data-icon="sparkles"></span>生成并打开</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 更多 -->
+  <div class="modal-backdrop" id="more-modal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="more-modal-title">
+      <div class="modal__head">
+        <div>
+          <h3 id="more-modal-title">会话操作</h3>
+          <p>导出或管理这条会话；删除后笔记会标记为「来源已删除」。</p>
+        </div>
+        <button class="icon-btn" type="button" data-modal-close aria-label="关闭"><span data-icon="x"></span></button>
+      </div>
+      <div class="modal__body">
+        <div class="list-row">
+          <div class="list-row__main"><span class="list-row__title">导出为 Markdown</span><span class="list-row__sub">保留判档、反馈与锚点信息</span></div>
+          <button class="btn btn--sm" type="button" id="export-chat"><span data-icon="download"></span>导出</button>
+        </div>
+        <div class="list-row">
+          <div class="list-row__main"><span class="list-row__title">查看学习画像</span><span class="list-row__sub">这条对话共影响 4 个概念</span></div>
+          <a class="btn btn--sm" href="profile.html">查看</a>
+        </div>
+        <div class="list-row">
+          <div class="list-row__main"><span class="list-row__title">删除会话</span><span class="list-row__sub">连带清理证据引用，操作不可撤销</span></div>
+          <button class="btn btn--sm btn--danger" type="button" id="delete-chat"><span data-icon="trash-2"></span>删除</button>
+        </div>
+        <p id="delete-confirm" hidden style="margin-top: 12px; color: var(--danger); font-size: 12.5px">
+          再次点击「删除」确认。关联笔记将保留，但标记为来源已删除。
+        </p>
+      </div>
+      <div class="modal__foot">
+        <button class="btn" type="button" data-modal-close>关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="icons.js"></script>
+  <script src="mock.js"></script>
+  <script src="api.js"></script>
+  <script src="app.js"></script>
+  <script src="assistant.js"></script>
+  <script>
+    (function () {
+      var ui = window.ui;
+      var thread = document.getElementById("thread");
+      var input = document.getElementById("composer-input");
+      var sendBtn = document.getElementById("send-btn");
+
+      var DEPTH_LABEL = {
+        L0: { text: "L0 · 基础", cls: "tag" },
+        L1: { text: "L1 · 中等", cls: "tag" },
+        L2: { text: "L2 · 深入", cls: "tag tag--primary" }
+      };
+
+      function icon(name) { return '<span data-icon="' + name + '"></span>'; }
+
+      function nowTime() {
+        return new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" });
+      }
+
+      function assistantActions(msg) {
+        var picked = msg.feedback === "helpful";
+        return (
+          '<div class="msg__actions">' +
+            '<button class="btn btn--sm' + (picked ? " btn--primary" : "") + '" type="button" data-feedback="helpful"' + (picked ? ' aria-pressed="true"' : "") + ">" + icon("check") + "有帮助</button>" +
+            '<button class="btn btn--sm" type="button" data-feedback="shallow">' + icon("arrow-up-right") + "太浅</button>" +
+            '<button class="btn btn--sm" type="button" data-feedback="unclear">' + icon("circle-help") + "没懂</button>" +
+            '<button class="btn btn--sm" type="button" data-simpler">' + icon("lightbulb") + "更简单的说法</button>" +
+            '<span class="spacer"></span>' +
+            '<button class="btn btn--sm" type="button" data-why>' + icon("lightbulb") + "为什么这么讲</button>" +
+          "</div>" +
+          '<div class="why-panel" hidden>' + (msg.why || "<strong>为什么这么讲？</strong><p>按当前画像判档，" + (msg.depth || "L1") + " 档位给出讲解深度。</p>") + "</div>"
+        );
+      }
+
+      function assistantHtml(msg) {
+        var d = DEPTH_LABEL[msg.depth] || DEPTH_LABEL.L1;
+        return (
+          '<article class="msg msg--assistant reveal" data-id="' + msg.id + '">' +
+            '<div class="msg__role">' +
+              '<span class="avatar">AI</span><strong>PAI 助教</strong>' +
+              '<span class="' + d.cls + '">' + d.text + "</span>" +
+              '<div class="msg__meta"><span>' + msg.time + "</span></div>" +
+            "</div>" +
+            '<div class="msg__body">' + msg.content + "</div>" +
+            assistantActions(msg) +
+          "</article>"
+        );
+      }
+
+      function esc(text) {
+        return String(text).replace(/[&<>"']/g, function (c) {
+          return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+        });
+      }
+
+      function userHtml(msg) {
+        return (
+          '<article class="msg msg--user reveal" data-id="' + msg.id + '">' +
+            '<div class="msg__role">' +
+              '<span class="avatar">' + (DB.user.letter || "林") + "</span><strong>你</strong>" +
+              '<div class="msg__meta"><span>' + (msg.time || nowTime()) + "</span></div>" +
+            "</div>" +
+            '<div class="msg__body">' + esc(msg.content) + "</div>" +
+            '<div class="msg__actions">' +
+              '<button class="btn btn--sm" type="button" data-edit>' + icon("edit") + "编辑</button>" +
+              '<button class="btn btn--sm" type="button" data-regen>' + icon("refresh-cw") + "重新生成</button>" +
+            "</div>" +
+          "</article>"
+        );
+      }
+
+      /** 编辑或重生成后，给紧随其后的助手回答打上过期标记 */
+      function markNextAnswerStale(msgEl) {
+        var next = msgEl.nextElementSibling;
+        while (next) {
+          if (next.classList.contains("msg--assistant")) {
+            if (!next.querySelector(".stale-note")) {
+              next.insertAdjacentHTML("beforeend", '<div class="stale-note">' + icon("alert-circle") + "因消息被修改，此回答已过期</div>");
+              window.renderIcons(next);
+            }
+            return;
+          }
+          next = next.nextElementSibling;
+        }
+      }
+
+      function renderThread(messages) {
+        thread.innerHTML = messages.map(function (m) { return m.role === "assistant" ? assistantHtml(m) : userHtml(m); }).join("");
+        window.renderIcons(thread);
+      }
+
+      function scrollBottom() {
+        window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+      }
+
+      function setSendEnabled() {
+        sendBtn.disabled = input.value.trim().length === 0;
+      }
+
+      function raiseBudget() {
+        var used = 20400 + Math.floor(Math.random() * 900) + 600;
+        var budget = 32000;
+        var pct = Math.round((used / budget) * 100);
+        document.getElementById("budget-fill").style.setProperty("--pct", pct + "%");
+        document.getElementById("budget-pct").textContent = pct + "%";
+        document.getElementById("budget-text").textContent = used.toLocaleString("en-US") + " / 32,000";
+        if (pct >= 80) document.getElementById("send-hint").textContent = "已自动压缩历史";
+      }
+
+      /* 载入消息 */
+      (async function () {
+        var messages = await api.getMessages("c1");
+        renderThread(messages);
+      })();
+
+      /* 建议 chip */
+      document.querySelectorAll("[data-suggest]").forEach(function (chip) {
+        chip.addEventListener("click", function () {
+          input.value = chip.getAttribute("data-suggest");
+          setSendEnabled();
+          input.focus();
+        });
+      });
+
+      input.addEventListener("input", setSendEnabled);
+      input.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          if (!sendBtn.disabled) sendBtn.click();
+        }
+      });
+
+      /* 发送 */
+      sendBtn.addEventListener("click", function () {
+        var text = input.value.trim();
+        if (!text) return;
+        var userMsg = { id: "u-" + Date.now(), role: "user", content: text, time: nowTime() };
+        thread.insertAdjacentHTML("beforeend", userHtml(userMsg));
+        window.renderIcons(thread);
+        input.value = "";
+        setSendEnabled();
+        sendBtn.disabled = true;
+
+        var typing = document.createElement("article");
+        typing.className = "msg msg--assistant";
+        typing.id = "typing";
+        typing.innerHTML =
+          '<div class="msg__role"><span class="avatar">AI</span><strong>PAI 助教</strong><div class="msg__meta"><span>正在讲解…</span></div></div>' +
+          '<div class="typing"><i></i><i></i><i></i></div>';
+        thread.appendChild(typing);
+        scrollBottom();
+
+        api.sendMessage({ conversation_id: "c1", content: text }).then(function (reply) {
+          typing.remove();
+          thread.insertAdjacentHTML("beforeend", assistantHtml(reply));
+          window.renderIcons(thread);
+          raiseBudget();
+          scrollBottom();
+          setSendEnabled();
+        });
+      });
+
+      /* 消息操作委托 */
+      thread.addEventListener("click", function (e) {
+        var msgEl = e.target.closest(".msg");
+        if (!msgEl) return;
+
+        var fbBtn = e.target.closest("[data-feedback]");
+        if (fbBtn) {
+          var kind = fbBtn.getAttribute("data-feedback");
+          msgEl.querySelectorAll("[data-feedback]").forEach(function (b) {
+            b.classList.remove("btn--primary");
+            b.removeAttribute("aria-pressed");
+          });
+          fbBtn.classList.add("btn--primary");
+          fbBtn.setAttribute("aria-pressed", "true");
+          var label = kind === "helpful" ? "已记录「有帮助」" : kind === "shallow" ? "已记录「太浅」，下次会讲更深" : "已记录「没懂」，将自动降档";
+          ui.toast(label + "，画像已更新");
+          return;
+        }
+
+        var whyBtn = e.target.closest("[data-why]");
+        if (whyBtn) {
+          var panel = msgEl.querySelector(".why-panel");
+          panel.hidden = !panel.hidden;
+          whyBtn.classList.toggle("btn--primary", !panel.hidden);
+          return;
+        }
+
+        var simpleBtn = e.target.closest("[data-simpler]");
+        if (simpleBtn) {
+          ui.toast("已切换为更简单的说法");
+          thread.insertAdjacentHTML(
+            "beforeend",
+            assistantHtml({
+              id: "simple-" + Date.now(),
+              role: "assistant",
+              depth: "L0",
+              time: nowTime(),
+              content: "<p>一句话版本：<strong>位置编码告诉模型「谁先谁后」，自注意力负责「谁和谁相关」。</strong></p><p>先记住这一句，细节等你想深入时再展开。</p>",
+              why: "<strong>为什么降到 L0？</strong><p>你主动要求更简单的说法，系统按最小必要深度给出单一结论。</p>"
+            })
+          );
+          window.renderIcons(thread);
+          scrollBottom();
+          return;
+        }
+
+        var editBtn = e.target.closest("[data-edit]");
+        if (editBtn) {
+          var body = msgEl.querySelector(".msg__body");
+          if (msgEl.querySelector("textarea")) return;
+          var original = body.textContent;
+          body.innerHTML = '<textarea class="textarea" rows="3"></textarea>' +
+            '<div class="page-actions" style="margin-top: 8px"><button class="btn btn--sm btn--primary" type="button" data-save-edit>保存</button><button class="btn btn--sm" type="button" data-cancel-edit>取消</button></div>' +
+            '<p class="field-note" style="margin-top: 6px">编辑后，后续回答会标记为过期，可重新生成。</p>';
+          var ta = body.querySelector("textarea");
+          ta.value = original;
+          ta.focus();
+          body.querySelector("[data-save-edit]").addEventListener("click", function () {
+            var val = ta.value.trim();
+            if (!val) { ui.toast("内容不能为空", "warn"); return; }
+            body.textContent = val;
+            msgEl.classList.add("msg--edited");
+            markNextAnswerStale(msgEl);
+            ui.toast("已保存编辑，后续回答标记为过期");
+          });
+          body.querySelector("[data-cancel-edit]").addEventListener("click", function () {
+            body.textContent = original;
+          });
+          return;
+        }
+
+        var regenBtn = e.target.closest("[data-regen]");
+        if (regenBtn) {
+          markNextAnswerStale(msgEl);
+          ui.toast("正在重新生成这条回答…");
+          setTimeout(function () {
+            thread.insertAdjacentHTML(
+              "beforeend",
+              assistantHtml({
+                id: "regen-" + Date.now(),
+                role: "assistant",
+                depth: "L1",
+                time: nowTime(),
+                content: "<p>重新组织一下：<strong>位置编码不是额外信息，而是让注意力具备顺序感的那部分结构。</strong></p><p>这次先用结论收束，如果还需要推导，我们再把 RoPE 的旋转展开。</p>",
+                why: "<strong>为什么重新生成？</strong><p>你手动触发了重生成，系统保留旧版并生成一版更短的解释，避免重复上一版措辞。</p>"
+              })
+            );
+            window.renderIcons(thread);
+            scrollBottom();
+          }, 1200);
+        }
+      });
+
+      /* 生成笔记入口的提示 */
+      document.querySelectorAll('[data-modal-open="note-modal"]').forEach(function (b) {
+        b.addEventListener("click", function () { ui.toast("已根据当前对话整理六段式笔记"); });
+      });
+
+      /* 导出 / 删除 */
+      document.getElementById("export-chat").addEventListener("click", function () {
+        var md = "# 为什么 Transformer 需要位置编码？\n\n> 来源：PAI 会话 c1 · 24 条消息\n\n";
+        DB.messages.forEach(function (m) {
+          md += "## " + (m.role === "user" ? "我" : "PAI 助教") + " · " + m.time + "\n\n" + api.htmlToMarkdown(m.content) + "\n\n";
+        });
+        ui.download("位置编码会话-2026-10-30.md", md);
+        ui.toast("会话已导出为 Markdown");
+      });
+
+      var deleteArmed = false;
+      var moreModal = document.getElementById("more-modal");
+
+      function resetDeleteConfirm() {
+        deleteArmed = false;
+        document.getElementById("delete-confirm").hidden = true;
+      }
+
+      // 关闭、取消、按 Esc 或重新打开弹窗时，都重置二次确认
+      moreModal.addEventListener("click", function (e) {
+        if (e.target.closest("[data-modal-close]") || e.target === moreModal) resetDeleteConfirm();
+      });
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape") resetDeleteConfirm();
+      });
+      document.querySelectorAll('[data-modal-open="more-modal"]').forEach(function (btn) {
+        btn.addEventListener("click", resetDeleteConfirm);
+      });
+
+      document.getElementById("delete-chat").addEventListener("click", function () {
+        var tip = document.getElementById("delete-confirm");
+        if (!deleteArmed) {
+          deleteArmed = true;
+          tip.hidden = false;
+          ui.toast("请再次点击删除以确认", "warn");
+          return;
+        }
+        resetDeleteConfirm();
+        ui.closeModal();
+        ui.toast("会话已删除，关联笔记标记为来源已删除");
+      });
+
+      /* 初始预算 */
+      raiseBudget();
+    })();
+  </script>
+</body>
+</html>
