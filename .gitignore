@@ -42,3 +42,12 @@ next-env.d.ts
 
 # app data
 /data/
+
+# 本机产物 / 个人工具配置
+/.dist/
+/.screenshots/
+/.trae-html-share-packages/
+/.zcode/
+
+# 独立子项目（不在本仓库维护）
+/AskToNote/

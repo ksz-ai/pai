@@ -1,0 +1,18 @@
+# 两人跨平台协作：所有文本文件统一 LF，杜绝 CRLF 假 diff
+* text=auto eol=lf
+
+# 二进制显式声明（防止误归一化）
+*.png -text
+*.jpg -text
+*.jpeg -text
+*.gif -text
+*.webp -text
+*.ico -text
+*.woff -text
+*.woff2 -text
+*.ttf -text
+*.otf -text
+*.mp4 -text
+*.webm -text
+*.zip -text
+*.db -text
